@@ -10,7 +10,7 @@ export const Nav = () => {
         <div className="w-full h-full flex justify-between items-center max-w-[90%] mx-auto">
           
           <div className="">{currentDate.toDateString()}</div>
-          asdasd
+          Creatives Admin
           <div className="w-fit">
             <div className="h-16 w-16 rounded-full overflow-hidden">
                 <img src="/images/boy.png" className="h-16 w-16 object-cover" alt="" />

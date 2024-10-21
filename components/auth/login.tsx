@@ -29,6 +29,7 @@ export function Login() {
 
     try {
       const result = await loginUser(username, password);
+      localStorage.setItem("token", result.token);
       console.log('Login successful:', result);
       // Redirect to 'creative-users' page upon successful login
       router.push('/creative-users');
