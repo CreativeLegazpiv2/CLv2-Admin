@@ -81,17 +81,18 @@ export default function PaginatedTable() {
       const updatedData = prevData.map((item) =>
         item.id === id ? { ...item, action: !item.action } : item
       );
-  
+
       // Instead of finding the item again, log it directly
       const updatedItem = updatedData.find((item) => item.id === id);
       if (updatedItem) {
-        console.log(`Item ID: ${updatedItem.id}, Action: ${updatedItem.action}`);
+        console.log(
+          `Item ID: ${updatedItem.id}, Action: ${updatedItem.action}`
+        );
       }
-  
+
       return updatedData; // Return the updated state
     });
   };
-  
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -129,9 +130,11 @@ export default function PaginatedTable() {
               <TableCell>{item.birthdate}</TableCell>
               <TableCell>{item.portfolio}</TableCell>
               <TableCell>
-                <div className="flex items-center space-x-2">
-                <Switch onClick={() => handleSwitchChange(item.id)} />
-                </div>
+                <Switch 
+                checked={item.action} 
+                onCheckedChange={() => handleSwitchChange(item.id)}
+                className="data-[state=checked]:bg-green-500 "
+                 />
               </TableCell>
             </TableRow>
           ))}
