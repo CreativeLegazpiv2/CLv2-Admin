@@ -1,3 +1,6 @@
+import { AppSidebar } from "@/components/custom-ui/layout/AppSideBar";
+import { Nav } from "@/components/custom-ui/layout/Nav";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,12 +20,15 @@ export default function PageLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+    <SidebarProvider>
+    <AppSidebar />
+    <main className="w-full flex flex-col">
+      <Nav />
+      {/* <SidebarTrigger className="border border-black" /> */}
+      <div className="w-full p-4">
+      {children}
+      </div>
+    </main>
+  </SidebarProvider>
   );
 }
