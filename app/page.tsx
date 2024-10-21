@@ -2,7 +2,7 @@ import { Login } from "@/components/auth/login";
 import { Nav } from "@/components/custom-ui/layout/Nav";
 import { SidebarHeader } from "@/components/ui/sidebar";
 
-export default function Home() {
+export default function Initial() {
   return (
     <main className="flex w-full h-dvh flex-col items-center justify-between">
       <SidebarHeader />
