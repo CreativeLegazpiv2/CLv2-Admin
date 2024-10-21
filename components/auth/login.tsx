@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import React, { useState, FormEvent } from 'react'; // Import FormEvent
+import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter for redirection
 import {
   Card,
   CardHeader,
@@ -19,6 +20,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null); // Type for error state
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Initialize router for navigation
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // Explicitly type 'e'
     e.preventDefault();
@@ -28,7 +30,8 @@ export function Login() {
     try {
       const result = await loginUser(username, password);
       console.log('Login successful:', result);
-      // Handle successful login (e.g., redirect to admin dashboard)
+      // Redirect to 'creative-users' page upon successful login
+      router.push('/creative-users');
     } catch (error: any) { // Optionally type the error
       console.error('Login failed:', error);
       setError(error.message); // Set the error message to display
