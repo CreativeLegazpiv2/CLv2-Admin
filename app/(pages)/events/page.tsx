@@ -7,7 +7,7 @@ import { AddEvents } from "./components/AddEvents";
 export default function Eventspage() {
   useAuthRedirect();
 
-  const [addEvent, setAddEvent] = useState(!false); // Initial state should be false
+  const [addEvent, setAddEvent] = useState(false); // Initial state should be false
 
   const openAddEvent = () => setAddEvent(true);
   const closeAddEvent = () => setAddEvent(false);
