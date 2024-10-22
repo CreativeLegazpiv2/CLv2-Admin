@@ -194,7 +194,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
                   <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2">
                     Edit
                   </Button>
-                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500">
+                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-red-500">
                     Delete
                   </Button>
                 </div>
