@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchAllUserDetails, updateUserStatus } from "@/services/userDetails/userDetails"; // Adjust the import path
 import {
   Table,
   TableBody,
@@ -21,43 +20,50 @@ import {
   PaginationNext,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import { Search, Send } from "lucide-react";
+import { CalendarArrowUp, Search, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import 'react-toastify/dist/ReactToastify.css'; // Import Toastify CSS
-import { toast, ToastContainer } from 'react-toastify';
+import { Label } from "@/components/ui/label";
 
-interface User {
-  detailsid: number;
-  first_name: string;
-  address: string;
-  mobileNo: string;
-  email: string;
-  portfolioLink: string;
-  bday: string;
-  portfolio: string;
-  status: boolean; // This will be added later
-}
+// Dummy data for the table
+const generateData = () => {
+  return Array.from({ length: 50 }, (_, i) => ({
+    id: i + 1,
+    event_name: `Item ${i + 1}`,
+    event_location: `Location ${(i % 5) + 1}`,
+    event_date: new Date().toLocaleDateString(),
+    str_time: "10:00 AM",
+    end_time: "11:00 AM",
+    description: `Description ${i + 1}`,
+    createdAt: new Date().toLocaleDateString(),
+    status: "Active",
+    action: false,
+  }));
+};
 
 export default function PaginatedTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState<User[]>([]);
+  const [data, setData] = useState<
+    {
+      id: number;
+      event_name: string;
+      event_location: string;
+      event_date: string;
+      str_time: string;
+      end_time: string;
+      description: string;
+      createdAt: string;
+      status: string;
+      action: boolean;
+    }[]
+  >([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await fetchAllUserDetails();
-        // Directly use the fetched result without modifying the status
-        setData(result);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
+    setData(generateData()); // Generates data after the component has mounted
   }, []);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(data.length / itemsPerPage);
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentData = data.slice(startIndex, endIndex);
@@ -74,40 +80,45 @@ export default function PaginatedTable() {
     setCurrentPage(pageNumber);
   };
 
-  const handleSwitchChange = async (detailsid: number, currentStatus: boolean) => {
-    const newStatus = !currentStatus; // Toggle the status
-  
-    try {
-      // Call the update function to update the status in the backend
-      await updateUserStatus(detailsid, newStatus);
-      
-      // Update the local state to reflect the new status
-      setData((prevData) =>
-        prevData.map((item) =>
-          item.detailsid === detailsid ? { ...item, status: newStatus } : item
-        )
+  const handleSwitchChange = (id: number) => {
+    setData((prevData) => {
+      const updatedData = prevData.map((item) =>
+        item.id === id ? { ...item, action: !item.action } : item
       );
-      toast.success(`Status updated to ${newStatus ? 'Active' : 'Inactive'}`);
-    } catch (error:any) {
-      console.error('Error updating status:', error);
-      toast.error('Failed to update status, Error: ' + error.message);
-      // Optionally, you can show a notification or alert the user about the error
-    }
+
+      // Instead of finding the item again, log it directly
+      const updatedItem = updatedData.find((item) => item.id === id);
+      if (updatedItem) {
+        console.log(
+          `Item ID: ${updatedItem.id}, Action: ${updatedItem.action}`
+        );
+      }
+
+      return updatedData; // Return the updated state
+    });
   };
-  
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
       <div className="w-full py-2 flex justify-between items-center">
-        <div className="flex w-full max-w-lg items-center gap-2 relative">
-          <Search className="absolute left-4" />
-          <Input
-            className="pl-12 border border-slate-900"
-            type="text"
-            placeholder="Search ..."
-          />
-          <Button type="submit">
-            <Send className="text-4xl text-green-500" size={16} />
+        <div className="w-full flex items-center justify-between">
+          <div className="flex w-full max-w-lg items-center gap-2 relative ">
+            <Search className="absolute left-4" />
+            <Input
+              className="pl-12 border border-slate-900"
+              type="text"
+              placeholder="Search ..."
+            />
+            <Button type="submit">
+              <Send className="text-4xl text-green-500" size={16} />
+            </Button>
+          </div>
+          <Button
+            className="bg-slate-900 text-stone-50 group hover:bg-green-500 hover:text-slate-900 w-32 py-3"
+            variant="outline"
+          >
+            <CalendarArrowUp className="text-green-500 group-hover:text-slate-900" size={32} />
+            Add Event
           </Button>
         </div>
       </div>
@@ -122,20 +133,22 @@ export default function PaginatedTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentData.map((item, index) => (
-            <TableRow key={index} className="hover:bg-gray-300">
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>{item.first_name}</TableCell>
-              <TableCell>{item.address}</TableCell>
-              <TableCell>{item.mobileNo}</TableCell>
-              <TableCell>{item.email}</TableCell>
-              <TableCell>{item.bday}</TableCell>
-              <TableCell>{item.portfolioLink}</TableCell>
+          {currentData.map((item) => (
+            <TableRow key={item.id} className="hover:bg-gray-300">
+              <TableCell>{item.id}</TableCell>
+              <TableCell>{item.event_name}</TableCell>
+              <TableCell>{item.event_location}</TableCell>
+              <TableCell>{item.event_date}</TableCell>
+              <TableCell>{item.str_time}</TableCell>
+              <TableCell>{item.end_time}</TableCell>
+              <TableCell>{item.description}</TableCell>
+              <TableCell>{item.createdAt}</TableCell>
+              <TableCell>{item.status}</TableCell>
               <TableCell>
                 <Switch
-                  checked={item.status}
-                  onCheckedChange={() => handleSwitchChange(item.detailsid, item.status)}
-                  className="data-[state=checked]:bg-green-500"
+                  checked={item.action}
+                  onCheckedChange={() => handleSwitchChange(item.id)}
+                  className="data-[state=checked]:bg-green-500 "
                 />
               </TableCell>
             </TableRow>
@@ -166,21 +179,22 @@ const PaginationUi: React.FC<any> = ({
   totalPages,
   prevPage,
   nextPage,
-  goToPage,
+  goToPage, // Add this new prop to handle jumping to a specific page
 }) => {
-  const pageRange = 3;
+  const pageRange = 3; // Number of pages to display at once
 
+  // Calculate pages to show based on currentPage
   const getPagesToShow = () => {
     let start, end;
 
     if (currentPage <= 2) {
       start = 1;
-      end = Math.min(pageRange, totalPages);
+      end = Math.min(pageRange, totalPages); // Show first 3 pages
     } else if (currentPage >= totalPages - 1) {
-      start = Math.max(totalPages - pageRange + 1, 1);
+      start = Math.max(totalPages - pageRange + 1, 1); // Show last 3 pages
       end = totalPages;
     } else {
-      start = currentPage - 1;
+      start = currentPage - 1; // Show current page in the middle
       end = Math.min(start + pageRange - 1, totalPages);
     }
 
@@ -193,6 +207,7 @@ const PaginationUi: React.FC<any> = ({
     <div>
       <Pagination className="w-full max-w-md min-w-[24rem] flex justify-end">
         <PaginationContent className="flex items-center">
+          {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
@@ -203,12 +218,14 @@ const PaginationUi: React.FC<any> = ({
             />
           </PaginationItem>
 
+          {/* Ellipsis before the page numbers if we're past the first 3 pages */}
           {currentPage > 2 && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
 
+          {/* Display 3 pages dynamically */}
           {pages.map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
@@ -218,19 +235,21 @@ const PaginationUi: React.FC<any> = ({
                     ? "font-bold text-green-500"
                     : "text-slate-900"
                 }`}
-                onClick={() => goToPage(page)}
+                onClick={() => goToPage(page)} // Jump to the clicked page
               >
                 {page}
               </PaginationLink>
             </PaginationItem>
           ))}
 
+          {/* Ellipsis after the page numbers if there are more pages to come */}
           {currentPage < totalPages - 1 && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
 
+          {/* Next Button */}
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
@@ -242,19 +261,19 @@ const PaginationUi: React.FC<any> = ({
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      <ToastContainer/>
     </div>
   );
 };
 
-
 const TableheaderFields = [
   "ID",
-  "Name",
-  "Address",
-  "Mobile No",
-  "Email",
-  "Birthday",
-  "Portfolio Link",
+  "Event Name",
+  "Location",
+  "Date",
+  "start time",
+  "end time",
+  "Description",
+  "Created At",
   "Status",
+  "Action",
 ];

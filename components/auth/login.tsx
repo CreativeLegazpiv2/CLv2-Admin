@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter for redirection
+import React, { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter for redirection
 import {
   Card,
   CardHeader,
@@ -13,16 +13,18 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { loginUser } from '@/services/login/login';
+import { loginUser } from "@/services/login/login";
+import { toast, ToastContainer } from "react-toastify";
 
 export function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null); // Type for error state
   const [loading, setLoading] = useState(false);
   const router = useRouter(); // Initialize router for navigation
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // Explicitly type 'e'
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    // Explicitly type 'e'
     e.preventDefault();
     setLoading(true);
     setError(null); // Reset any previous error
@@ -30,11 +32,16 @@ export function Login() {
     try {
       const result = await loginUser(username, password);
       localStorage.setItem("token", result.token);
-      console.log('Login successful:', result);
+      console.log("Login successful:", result);
       // Redirect to 'creative-users' page upon successful login
-      router.push('/creative-users');
-    } catch (error: any) { // Optionally type the error
-      console.error('Login failed:', error);
+      router.push("/creative-users");
+      toast.success("Welcome back, Admin!", {
+        position: "bottom-right",
+        autoClose: 5000,
+      });
+    } catch (error: any) {
+      // Optionally type the error
+      console.error("Login failed:", error);
       setError(error.message); // Set the error message to display
     } finally {
       setLoading(false);
@@ -71,18 +78,22 @@ export function Login() {
               required
             />
           </div>
-          {error && <p className="text-red-500">{error}</p>} {/* Display error message */}
+          {error && <p className="text-red-500">{error}</p>}{" "}
+          {/* Display error message */}
         </CardContent>
         <CardFooter>
           <Button
             type="submit"
             disabled={loading} // Disable button while loading
-            className={`w-full hover:bg-slate-800 duration-300 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full hover:bg-slate-800 duration-300 transition-colors ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
         </CardFooter>
       </form>
+      <ToastContainer/>
     </Card>
   );
 }
