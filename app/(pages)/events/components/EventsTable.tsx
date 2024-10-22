@@ -35,12 +35,17 @@ const generateData = () => {
     end_time: "11:00 AM",
     description: `Description ${i + 1}`,
     createdAt: new Date().toLocaleDateString(),
-    status: "Active",
+    status: false,
     action: false,
   }));
 };
 
-export default function PaginatedTable() {
+interface EventsTableProps {
+  openAddEvent: () => void; 
+}
+export const PaginatedTable: React.FC<EventsTableProps> = ({
+  openAddEvent,
+}) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<
     {
@@ -52,7 +57,7 @@ export default function PaginatedTable() {
       end_time: string;
       description: string;
       createdAt: string;
-      status: string;
+      status: boolean;
       action: boolean;
     }[]
   >([]);
@@ -83,20 +88,21 @@ export default function PaginatedTable() {
   const handleSwitchChange = (id: number) => {
     setData((prevData) => {
       const updatedData = prevData.map((item) =>
-        item.id === id ? { ...item, action: !item.action } : item
+        item.id === id ? { ...item, status: !item.status } : item
       );
 
       // Instead of finding the item again, log it directly
       const updatedItem = updatedData.find((item) => item.id === id);
       if (updatedItem) {
         console.log(
-          `Item ID: ${updatedItem.id}, Action: ${updatedItem.action}`
+          `Item ID: ${updatedItem.id}, Action: ${updatedItem.status}`
         );
       }
 
       return updatedData; // Return the updated state
     });
   };
+  
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -114,10 +120,14 @@ export default function PaginatedTable() {
             </Button>
           </div>
           <Button
-            className="bg-slate-900 text-stone-50 group hover:bg-green-500 hover:text-slate-900 w-32 py-3"
+            className={`bg-slate-900 text-stone-50 group hover:bg-green-500 hover:text-slate-900 w-32 py-3 `}
             variant="outline"
+            onClick={openAddEvent}
           >
-            <CalendarArrowUp className="text-green-500 group-hover:text-slate-900" size={32} />
+            <CalendarArrowUp
+              className="text-green-500 group-hover:text-slate-900"
+              size={32}
+            />
             Add Event
           </Button>
         </div>
@@ -126,7 +136,12 @@ export default function PaginatedTable() {
         <TableHeader className="bg-slate-900 ">
           <TableRow className="hover:bg-slate-900 ">
             {TableheaderFields.map((field) => (
-              <TableHead key={field} className="text-white uppercase">
+              <TableHead
+                key={field}
+                className={`text-white uppercase ${
+                  field === "ID" ? "w-[5%]" : "w-[10%]"
+                } `}
+              >
                 {field}
               </TableHead>
             ))}
@@ -136,20 +151,53 @@ export default function PaginatedTable() {
           {currentData.map((item) => (
             <TableRow key={item.id} className="hover:bg-gray-300">
               <TableCell>{item.id}</TableCell>
-              <TableCell>{item.event_name}</TableCell>
-              <TableCell>{item.event_location}</TableCell>
+              <TableCell>
+                <p
+                  className={`${
+                    item.event_name.length > 10 ? "line-clamp-1" : ""
+                  }`}
+                >
+                  {item.event_name}
+                </p>
+              </TableCell>
+              <TableCell>
+                <p
+                  className={`${
+                    item.event_location.length > 10 ? "line-clamp-1" : ""
+                  }`}
+                >
+                  {item.event_location}
+                </p>
+              </TableCell>
               <TableCell>{item.event_date}</TableCell>
               <TableCell>{item.str_time}</TableCell>
               <TableCell>{item.end_time}</TableCell>
-              <TableCell>{item.description}</TableCell>
+              <TableCell>
+                <p
+                  className={`${
+                    item.description.length > 10 ? "line-clamp-1" : ""
+                  }`}
+                >
+                  {item.description}
+                </p>
+              </TableCell>
               <TableCell>{item.createdAt}</TableCell>
-              <TableCell>{item.status}</TableCell>
               <TableCell>
                 <Switch
-                  checked={item.action}
+                  checked={item.status}
                   onCheckedChange={() => handleSwitchChange(item.id)}
                   className="data-[state=checked]:bg-green-500 "
                 />
+              </TableCell>
+              <TableCell className="flex justify-end">
+                <div className="flex gap-2">
+                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2">
+                    Edit
+                  </Button>
+                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500">
+                    Delete
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -172,7 +220,7 @@ export default function PaginatedTable() {
       </div>
     </div>
   );
-}
+};
 
 const PaginationUi: React.FC<any> = ({
   currentPage,

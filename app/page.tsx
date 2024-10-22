@@ -1,5 +1,5 @@
 import { Login } from "@/components/auth/login";
-import { Nav } from "@/components/custom-ui/layout/Nav";
+import { Nav } from "@/components/layout/Nav";
 import { SidebarHeader } from "@/components/ui/sidebar";
 
 export default function Initial() {

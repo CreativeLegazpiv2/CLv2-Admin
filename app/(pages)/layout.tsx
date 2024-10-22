@@ -1,5 +1,5 @@
-import { AppSidebar } from "@/components/custom-ui/layout/SideBar";
-import { Nav } from "@/components/custom-ui/layout/Nav";
+import { AppSidebar } from "@/components/layout/SideBar";
+import { Nav } from "@/components/layout/Nav";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Metadata } from "next";
 
