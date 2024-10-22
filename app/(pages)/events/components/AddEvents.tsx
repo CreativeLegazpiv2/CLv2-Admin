@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
-import { DatePickerDemo } from "./DatePicker";
+import { DatePickerDemo } from "./Picker/DatePicker";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import TimePicker from "./Picker/TimePicker";
 
 interface AddEventsProps {
   onClose: () => void;
 }
 
 export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
-  // State variables to store form data
   const [formData, setFormData] = useState({
     image: "",
     title: "",
@@ -22,28 +22,51 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     description: "",
   });
 
-  // Handle input changes
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value }); // Update the respective field
+    setFormData({ ...formData, [id]: value });
   };
 
-  // Handle date selection
-  //AROG KAINI PADI ANG PAGCHANGE KI DATE PARA SAKTO KUNG ANO PININDOT KANG USER...
-  const handleDateChange = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      // Format the date as 'YYYY-MM-DD' before saving it in the form data
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      setFormData({ ...formData, date: formattedDate }); // Save the formatted date string
+  const handleDateChange = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const formattedDate = format(date, "yyyy-MM-dd");
+      setFormData({ ...formData, date: formattedDate });
     }
   };
 
-  // Handle form submission
+  const handleStartTimeChange = (time: string) => {
+    setFormData({ ...formData, startTime: time });
+  };
+  const handleEndTimeChange = (time: string) => {
+    setFormData({ ...formData, endTime: time });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitted data:", formData); // Log the form data
+    console.log("Submitted data:", formData);
+  };
+
+  const onCancel = () => {
+    setFormData({
+      image: "",
+      title: "",
+      location: "",
+      date: "",
+      startTime: "",
+      endTime: "",
+      description: "",
+    });
+    setSelectedDate(undefined); // Reset selected date
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the file input
+    }
+    onClose(); // Close the modal or component
   };
 
   return (
@@ -63,6 +86,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
               className="bg-white"
               id="image"
               type="file"
+              ref={fileInputRef}
               onChange={handleChange}
             />
           </div>
@@ -96,35 +120,20 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             <label htmlFor="date" className="ml-2">
               Date
             </label>
-            {/* Pass the date selection handler to DatePickerDemo */}
-            <DatePickerDemo onChange={handleDateChange} />
+            <DatePickerDemo onChange={handleDateChange} selectedDate={selectedDate} />
           </div>
 
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="startTime" className="ml-2">
               Start time
             </label>
-            <Input
-              className="bg-white"
-              id="startTime"
-              type="text"
-              placeholder="Start time"
-              onChange={handleChange}
-              value={formData.startTime}
-            />
+            <TimePicker onChange={handleStartTimeChange} />
           </div>
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="endTime" className="ml-2">
               End time
             </label>
-            <Input
-              className="bg-white"
-              id="endTime"
-              type="text"
-              placeholder="End time"
-              onChange={handleChange}
-              value={formData.endTime}
-            />
+            <TimePicker onChange={handleEndTimeChange} />
           </div>
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="description" className="ml-2">
@@ -139,7 +148,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             />
           </div>
           <div className="w-full flex flex-row gap-1 justify-end items-end">
-            <Button className="w-32 hover:text-red-500" onClick={onClose}>
+            <Button onClick={onCancel} type="button" className="w-32 hover:text-red-500">
               Cancel
             </Button>
             <Button className="mt-8 w-32 hover:text-green-500" type="submit">
