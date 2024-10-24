@@ -46,7 +46,7 @@ export function AppSidebar() {
   };
 
   return (
-      <Sidebar className="z-[100]">
+      <Sidebar className="z-[100] h-dvh">
       <SidebarHeader className=" px-6 py-4 flex justify-center items-center bg-slate-900">
         <div className="h-[8vh] w-fit">
           <img
