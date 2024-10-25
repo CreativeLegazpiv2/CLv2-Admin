@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { loginUser } from "@/services/login/login";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 
 export function Login() {
   const [username, setUsername] = useState("");
@@ -93,7 +93,6 @@ export function Login() {
           </Button>
         </CardFooter>
       </form>
-      <ToastContainer/>
     </Card>
   );
 }

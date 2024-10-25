@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { CalendarArrowUp, Search, Send } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { DeleteModal } from "./DeleteModal";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Dummy data for the table
 const generateData = () => {
@@ -41,7 +43,7 @@ const generateData = () => {
 };
 
 interface EventsTableProps {
-  openAddEvent: () => void; 
+  openAddEvent: () => void;
 }
 export const PaginatedTable: React.FC<EventsTableProps> = ({
   openAddEvent,
@@ -102,7 +104,13 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
       return updatedData; // Return the updated state
     });
   };
-  
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDelete = (id: number) => {
+    // You can handle any additional delete logic here (e.g., setting the ID to delete)
+    setShowDeleteModal(true); // This will show the modal
+  };
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -194,7 +202,10 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
                   <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2">
                     Edit
                   </Button>
-                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-red-500">
+                  <Button
+                    onClick={() => handleDelete(item.id)}
+                    className="bg-slate-900 text-stone-50 group w-16 hover:text-red-500"
+                  >
                     Delete
                   </Button>
                 </div>
@@ -218,6 +229,20 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           />
         </div>
       </div>
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setShowDeleteModal(false)}
+            className="w-full h-dvh fixed top-0 left-0 z-[1000] bg-black/50"
+          >
+            <DeleteModal onClose={() => setShowDeleteModal(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
