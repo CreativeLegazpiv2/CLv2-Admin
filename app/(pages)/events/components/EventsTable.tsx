@@ -74,7 +74,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = data.slice(startIndex, endIndex);
+  const currentData = Array.isArray(data) ? data.slice(startIndex, endIndex) : [];
 
   const nextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -142,16 +142,27 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           schema: "public",
           table: "admin_events",
         },
-        (payload: any) => {
-          setData(payload.new);
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setData(prevData => 
+              prevData.map(item => 
+                item.id === payload.new.id ? { ...item, ...payload.new } : item
+              )
+            );
+          } else if (payload.eventType === 'INSERT') {
+            // Ensure payload.new is in the shape of AdminEvent
+            setData(prevData => [...prevData, payload.new as AdminEvent]);
+          }
+          
         }
       )
       .subscribe();
-
+  
     return () => {
       supabase.removeChannel(subscription);
     };
   }, []);
+  
   
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -214,7 +225,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           <TableRow className="hover:bg-slate-900 ">
             {TableheaderFields.map((field) => (
               <TableHead
-                key={field}
+                key={field + 1}
                 className={`text-white uppercase ${
                   field === "ID" ? "w-[5%]" : "w-[10%]"
                 } `}
@@ -225,9 +236,9 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentData.map((item) => (
-            <TableRow key={item.id} className="hover:bg-gray-300">
-              <TableCell>{item.id}</TableCell>
+          {currentData.map((item, index) => (
+            <TableRow key={`${item.id}-${index}`} className="hover:bg-gray-300">
+              <TableCell>{item.id}</TableCell> 
               <TableCell>
                 <p
                   className={`${
