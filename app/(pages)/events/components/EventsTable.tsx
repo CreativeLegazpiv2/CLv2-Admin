@@ -25,22 +25,22 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { DeleteModal } from "./DeleteModal";
 import { AnimatePresence, motion } from "framer-motion";
+import { supabase } from "@/services/supabaseClient";
 
 // Dummy data for the table
-const generateData = () => {
-  return Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    event_name: `Item ${i + 1}`,
-    event_location: `Location ${(i % 5) + 1}`,
-    event_date: new Date().toLocaleDateString(),
-    str_time: "10:00 AM",
-    end_time: "11:00 AM",
-    description: `Description ${i + 1}`,
-    createdAt: new Date().toLocaleDateString(),
-    status: false,
-    action: false,
-  }));
-};
+interface AdminEvent {
+  id: number;
+  title: string;
+  location: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  desc: string;
+  image: File;
+  created_at: string;
+  status: boolean;
+}
+
 
 interface EventsTableProps {
   openAddEvent: () => void;
@@ -49,23 +49,24 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
   openAddEvent,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState<
-    {
-      id: number;
-      event_name: string;
-      event_location: string;
-      event_date: string;
-      str_time: string;
-      end_time: string;
-      description: string;
-      createdAt: string;
-      status: boolean;
-      action: boolean;
-    }[]
-  >([]);
+  const [data, setData] = useState<AdminEvent[]>([]);
 
   useEffect(() => {
-    setData(generateData()); // Generates data after the component has mounted
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/events", {
+          method: "GET",
+        });
+        if (!response.ok) throw new Error("Error fetching events");
+
+        const events = await response.json();
+        setData(events);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const itemsPerPage = 10;
@@ -87,23 +88,71 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     setCurrentPage(pageNumber);
   };
 
-  const handleSwitchChange = (id: number) => {
-    setData((prevData) => {
-      const updatedData = prevData.map((item) =>
-        item.id === id ? { ...item, status: !item.status } : item
-      );
-
-      // Instead of finding the item again, log it directly
-      const updatedItem = updatedData.find((item) => item.id === id);
-      if (updatedItem) {
-        console.log(
-          `Item ID: ${updatedItem.id}, Action: ${updatedItem.status}`
-        );
+  const handleSwitchChange = async (id: number) => {
+    // Find the current status of the event
+    const currentItem = data.find(item => item.id === id);
+    if (!currentItem) return;
+  
+    // Toggle the status locally
+    const updatedStatus = !currentItem.status;
+  
+    // Update the data state optimistically
+    setData(prevData => 
+      prevData.map(item => 
+        item.id === id ? { ...item, status: updatedStatus } : item
+      )
+    );
+  
+    try {
+      // Send the PUT request to update the status
+      const response = await fetch(`/api/events`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status: updatedStatus }),
+      });
+  
+      // Check for errors in the response
+      if (!response.ok) {
+        throw new Error("Failed to update status");
       }
-
-      return updatedData; // Return the updated state
-    });
+  
+      const result = await response.json();
+      console.log("Update successful:", result);
+    } catch (error) {
+      console.error("Error updating status:", error);
+  
+      // Roll back the state if the update fails
+      setData(prevData => 
+        prevData.map(item => 
+          item.id === id ? { ...item, status: !updatedStatus } : item
+        )
+      );
+    }
   };
+
+  useEffect(() => {
+    const subscription = supabase
+      .channel("admin_events_Channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "admin_events",
+        },
+        (payload: any) => {
+          setData(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+  
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -111,6 +160,26 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     // You can handle any additional delete logic here (e.g., setting the ID to delete)
     setShowDeleteModal(true); // This will show the modal
   };
+
+
+  const formatDateToPH = (dateString: string) => {
+    const date = new Date(dateString);
+  
+    // Convert to Philippine time (UTC+8)
+    const options: Intl.DateTimeFormatOptions = {
+      year: '2-digit', 
+      month: '2-digit', 
+      day: '2-digit', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: false,
+      timeZone: 'Asia/Manila'
+    };
+  
+    // Format the date
+    return date.toLocaleString('en-US', options).replace(',', '');
+  };
+
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -162,34 +231,34 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               <TableCell>
                 <p
                   className={`${
-                    item.event_name.length > 10 ? "line-clamp-1" : ""
+                    item.title.length > 10 ? "line-clamp-1" : ""
                   }`}
                 >
-                  {item.event_name}
+                  {item.title}
                 </p>
               </TableCell>
               <TableCell>
                 <p
                   className={`${
-                    item.event_location.length > 10 ? "line-clamp-1" : ""
+                    item.location.length > 10 ? "line-clamp-1" : ""
                   }`}
                 >
-                  {item.event_location}
+                  {item.location}
                 </p>
               </TableCell>
-              <TableCell>{item.event_date}</TableCell>
-              <TableCell>{item.str_time}</TableCell>
+              <TableCell>{item.date}</TableCell>
+              <TableCell>{item.start_time}</TableCell>
               <TableCell>{item.end_time}</TableCell>
               <TableCell>
                 <p
                   className={`${
-                    item.description.length > 10 ? "line-clamp-1" : ""
+                    item.desc.length > 10 ? "line-clamp-1" : ""
                   }`}
                 >
-                  {item.description}
+                  {item.desc}
                 </p>
               </TableCell>
-              <TableCell>{item.createdAt}</TableCell>
+              <TableCell>{formatDateToPH(item.created_at)}</TableCell>
               <TableCell>
                 <Switch
                   checked={item.status}

@@ -13,7 +13,7 @@ interface AddEventsProps {
 
 export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   const [formData, setFormData] = useState({
-    image: "",
+    image: null as File | null, // Change to File type
     title: "",
     location: "",
     date: "",
@@ -32,6 +32,12 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     setFormData({ ...formData, [id]: value });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData({ ...formData, image: e.target.files[0] }); // Set image file
+    }
+  };
+
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
     if (date) {
@@ -43,18 +49,66 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   const handleStartTimeChange = (time: string) => {
     setFormData({ ...formData, startTime: time });
   };
+
   const handleEndTimeChange = (time: string) => {
     setFormData({ ...formData, endTime: time });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitted data:", formData);
+
+    // Create a new FormData object
+    const data = new FormData();
+    data.append("title", formData.title);
+    data.append("location", formData.location);
+    data.append("date", formData.date);
+    data.append("startTime", formData.startTime);
+    data.append("endTime", formData.endTime);
+    data.append("desc", formData.description);
+    if (formData.image) {
+      data.append("image", formData.image); // Append the image file
+    }
+
+    console.log(formData)
+
+    // Make a POST request to your API
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        body: data,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create event");
+      }
+
+      // Optionally handle success here
+      console.log("Event created successfully:", result);
+      setFormData({
+        image: null,
+        title: "",
+        location: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+        description: "",
+      });
+      setSelectedDate(undefined);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Clear the file input
+      }
+      onClose(); // Close the modal on successful submission
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // Optionally handle errors here
+    }
   };
 
   const onCancel = () => {
     setFormData({
-      image: "",
+      image: null,
       title: "",
       location: "",
       date: "",
@@ -62,11 +116,11 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
       endTime: "",
       description: "",
     });
-    setSelectedDate(undefined); // Reset selected date
+    setSelectedDate(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // Clear the file input
     }
-    onClose(); // Close the modal or component
+    onClose();
   };
 
   return (
@@ -87,7 +141,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
               id="image"
               type="file"
               ref={fileInputRef}
-              onChange={handleChange}
+              onChange={handleFileChange} // Use handleFileChange
             />
           </div>
           <div className="w-full flex flex-col gap-1">
