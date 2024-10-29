@@ -89,7 +89,6 @@ export function AppSidebar() {
           Logout
         </Button>
       </SidebarFooter>
-      <ToastContainer/>
     </Sidebar>
   );
 }

@@ -78,7 +78,7 @@ export function Login() {
               required
             />
           </div>
-          {error && <p className="text-red-500">{error}</p>}{" "}
+          {error && <p className="text-red-500 text-xs">{error}</p>}{" "}
           {/* Display error message */}
         </CardContent>
         <CardFooter>
