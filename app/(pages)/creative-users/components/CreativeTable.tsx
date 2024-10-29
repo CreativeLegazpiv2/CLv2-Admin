@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { fetchAllUserDetails, updateUserStatus } from "@/services/userDetails/userDetails"; // Adjust the import path
+import { useState, useEffect, useRef } from "react";
+import { fetchAllUserDetails, updateUserStatus, updateOrAddRank } from "@/services/userDetails/userDetails"; // Adjust the import path
 import {
   Table,
   TableBody,
@@ -36,12 +36,15 @@ interface User {
   bday: string;
   portfolio: string;
   status: boolean; // This will be added later
+  rank: number | null;
 }
 
 export default function PaginatedTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<User[]>([]);
-
+  const [editingRank, setEditingRank] = useState<number | null>(null); // Track currently editing row
+  const [rankValue, setRankValue] = useState<number | null>(null); // Store rank input value
+  const previousRankValueRef = useRef<number | null>(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,11 +79,11 @@ export default function PaginatedTable() {
 
   const handleSwitchChange = async (detailsid: number, currentStatus: boolean) => {
     const newStatus = !currentStatus; // Toggle the status
-  
+
     try {
       // Call the update function to update the status in the backend
       await updateUserStatus(detailsid, newStatus);
-      
+
       // Update the local state to reflect the new status
       setData((prevData) =>
         prevData.map((item) =>
@@ -88,13 +91,80 @@ export default function PaginatedTable() {
         )
       );
       toast.success(`Status updated to ${newStatus ? 'Active' : 'Inactive'}`);
-    } catch (error:any) {
+    } catch (error: any) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status, Error: ' + error.message);
       // Optionally, you can show a notification or alert the user about the error
     }
   };
-  
+
+  const handleRankClick = (item: User) => {
+    setEditingRank(item.detailsid);
+    setRankValue(item.rank);
+    previousRankValueRef.current = item.rank;
+  }
+
+
+
+  const handleRankChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    if (value >= 0 && value <= 10) {
+      setRankValue(value); // Update the input value
+    }
+  };
+
+  const handleRankBlur = async (item: User) => {
+    if (rankValue !== null) {
+      const previousRankValue = previousRankValueRef.current;
+
+      if (previousRankValue === rankValue) {
+        toast.info('Nothing changed'); // Alert that there’s no change
+        setEditingRank(null); // Exit edit mode
+        return; // Exit the function early
+      }
+
+      // Check if the rank is already taken
+      const isRankTaken = data.some((user) => user.detailsid !== item.detailsid && user.rank === rankValue && rankValue != 0);
+
+      if (isRankTaken) {
+        // Show error toast if the rank is already taken
+        toast.error('Error: Rank is already taken');
+        setEditingRank(null); // Exit edit mode
+        return; // Exit the function early
+      }
+
+      try {
+        const response = await fetch(`/api/handleRank`, {
+          method: 'POST', // Ensure you're sending a POST request
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: item.detailsid, newRank: rankValue }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update rank');
+        }
+
+        const result = await response.json();
+        // Update the local state with the new rank
+        setData((prevData) =>
+          prevData.map((user) =>
+            user.detailsid === item.detailsid ? { ...user, rank: rankValue } : user
+          )
+        );
+        toast.success(result.message);
+      } catch (error: any) {
+        console.error('Error updating rank:', error);
+        toast.error('Failed to update rank: ' + error.message);
+      }
+    }
+    setEditingRank(null); // Exit edit mode
+  };
+
+
+
+
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -138,6 +208,28 @@ export default function PaginatedTable() {
                   className="data-[state=checked]:bg-green-500"
                 />
               </TableCell>
+              <TableCell onClick={() => handleRankClick(item)}>
+                {editingRank === item.detailsid ? (
+                  <Input
+                    type="text"
+                    value={rankValue ?? ""}
+                    onChange={handleRankChange}
+                    onBlur={() => handleRankBlur(item)}
+                    max={10}
+                    min={0}
+                    className="w-16"
+                    step="1"
+                  />
+                ) : (
+                  item.rank && item.rank > 0 ? (
+                    item.rank
+                  ) : (
+                    <button className="bg-[skyblue] border border-[grey] p-1 hover:bg-[#6fafc8]">
+                      Add rank
+                    </button>
+                  )
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -158,6 +250,9 @@ export default function PaginatedTable() {
         </div>
       </div>
     </div>
+
+
+
   );
 }
 
@@ -196,9 +291,8 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === 1 ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === 1 ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
@@ -213,11 +307,10 @@ const PaginationUi: React.FC<any> = ({
             <PaginationItem key={page}>
               <PaginationLink
                 href="#"
-                className={`w-10 h-10 flex items-center justify-center ${
-                  page === currentPage
-                    ? "font-bold text-green-500"
-                    : "text-slate-900"
-                }`}
+                className={`w-10 h-10 flex items-center justify-center ${page === currentPage
+                  ? "font-bold text-green-500"
+                  : "text-slate-900"
+                  }`}
                 onClick={() => goToPage(page)}
               >
                 {page}
@@ -234,16 +327,17 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === totalPages ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === totalPages ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
-      <ToastContainer/>
+      <ToastContainer />
     </div>
+
+
   );
 };
 
@@ -257,4 +351,5 @@ const TableheaderFields = [
   "Birthday",
   "Portfolio Link",
   "Status",
+  "Rank"
 ];

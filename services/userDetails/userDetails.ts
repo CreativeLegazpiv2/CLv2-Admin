@@ -42,3 +42,25 @@ export async function fetchAllUserDetails() {
     }
   }
   
+
+  export async function updateOrAddRank(detailsid: number, rank: number) {
+    try {
+      const response = await fetch('/api/handleRank', { // Adjust the path if necessary
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ detailsid, rank }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update or add rank');
+      }
+  
+      const data = await response.json();
+      return data; // Return the updated rank data if needed
+    } catch (error) {
+      console.error('Error updating or adding rank:', error);
+      throw error; // Rethrow the error for handling in the calling component
+    }
+  }
