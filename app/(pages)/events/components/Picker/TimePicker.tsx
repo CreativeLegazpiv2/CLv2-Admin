@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,13 +8,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-export default function TimePicker({ onChange }: { onChange: (time: string) => void }) {
-  const [time, setTime] = useState('12:00')
+export default function TimePicker({ onChange, value }: { onChange: (time: string) => void; value: string }) {
+  const [time, setTime] = useState(value);
+
+  useEffect(() => {
+    setTime(value); // Update the local state if the prop changes
+  }, [value]);
 
   const handleTimeChange = (newTime: string) => {
-    setTime(newTime)
-    onChange(newTime)
-  }
+    setTime(newTime);
+    onChange(newTime);
+  };
+
 
   const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'))
   const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'))

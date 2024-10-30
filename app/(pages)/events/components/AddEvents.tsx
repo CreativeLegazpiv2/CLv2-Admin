@@ -8,28 +8,12 @@ import { format } from "date-fns";
 import TimePicker from "./Picker/TimePicker";
 import { useToast } from "@/hooks/use-toast";
 
-
 interface AddEventsProps {
   onClose: () => void;
 }
 
 export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
-
   const { toast } = useToast();
-
-  const onCancel = () => {
-    setFormData({
-      image: null,
-      title: "",
-      location: "",
-      date: "",
-      startTime: "",
-      endTime: "",
-      description: "",
-    })
-    onClose();
-  }
-
 
   const [formData, setFormData] = useState({
     image: null as File | null,
@@ -42,9 +26,32 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [minEndTime, setMinEndTime] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [resetKey, setResetKey] = useState(0); // Step 1: add resetKey state
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onReset = () => {
+    setFormData({
+      image: null,
+      title: "",
+      location: "",
+      date: "",
+      startTime: "",  // Reset start time
+      endTime: "",    // Reset end time
+      description: "",
+    });
+    setSelectedDate(undefined);
+    setMinEndTime(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Clear the file input
+    }
+    onClose();
+  };
+  
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
   };
@@ -63,27 +70,59 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     }
   };
 
+  const isValidTimeFormat = (time: string): boolean => {
+    // Regex to match HH:mm format (24-hour format)
+    return /^([01]\d|2[0-3]):([0-5]\d)$/.test(time);
+  };
+
   const handleStartTimeChange = (time: string) => {
+    if (!isValidTimeFormat(time)) {
+      toast({
+        title: "Error",
+        description: "Invalid start time format. Use HH:mm format.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setFormData({ ...formData, startTime: time });
 
-    if (new Date(`1970-01-01T${time}`) >= new Date(`1970-01-01T${formData.endTime}`)) {
+    // Check if endTime is valid and after startTime
+    if (
+      formData.endTime &&
+      new Date(`1970-01-01T${time}`) >=
+        new Date(`1970-01-01T${formData.endTime}`)
+    ) {
       setFormData({ ...formData, endTime: "" });
       toast({
         title: "Warning",
-        description: "Start time should be before end time",
-        variant: "destructive"
+        description: "Start time should be before end time.",
+        variant: "destructive",
       });
     }
   };
 
   const handleEndTimeChange = (time: string) => {
-    if (new Date(`1970-01-01T${formData.startTime}`) < new Date(`1970-01-01T${time}`)) {
+    if (!isValidTimeFormat(time)) {
+      toast({
+        title: "Error",
+        description: "Invalid end time format. Use HH:mm format.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const startTime = new Date(`1970-01-01T${formData.startTime}`);
+    const endTime = new Date(`1970-01-01T${time}`);
+
+    // Check if endTime is after startTime
+    if (startTime < endTime) {
       setFormData({ ...formData, endTime: time });
     } else {
       toast({
         title: "Warning",
-        description: "End time should be after start time",
-        variant: "destructive"
+        description: "End time should be after start time.",
+        variant: "destructive",
       });
     }
   };
@@ -91,17 +130,22 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate fields
-    if (!formData.title || !formData.location || !formData.date || !formData.startTime || !formData.endTime || !formData.description) {
+    if (
+      !formData.title ||
+      !formData.location ||
+      !formData.date ||
+      !formData.startTime ||
+      !formData.endTime ||
+      !formData.description
+    ) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
-    // Create a new FormData object
     const data = new FormData();
     data.append("title", formData.title);
     data.append("location", formData.location);
@@ -111,6 +155,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     data.append("desc", formData.description);
     if (formData.image) {
       data.append("image", formData.image);
+      onReset();
     }
 
     try {
@@ -123,7 +168,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
         toast({
           title: "Error",
           description: "Failed to create event",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -131,37 +176,26 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
       toast({
         title: "Success",
         description: "Event created successfully!",
-        variant: "default"
+        variant: "success",
       });
 
-      // Reset form
-      setFormData({
-        image: null,
-        title: "",
-        location: "",
-        date: "",
-        startTime: "",
-        endTime: "",
-        description: "",
-      });
-      setSelectedDate(undefined);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      onClose();
+      onReset(); // Reset the form on success
     } catch (error) {
       toast({
         title: "Error",
         description: "An error occurred. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
       console.error("Error creating event:", error);
     }
   };
+
   return (
     <div className="w-full min-h-[15dvh] bg-stone-200 flex justify-start items-start relative">
       <X
         onClick={onClose}
-        className="absolute top-0 right-0 cursor-pointer hover:text-green-500 duration-300"
-        size={30}
+        className="absolute top-2 right-2 cursor-pointer hover:text-red-500 duration-300"
+        size={25}
       />
       <div className="w-full h-full p-4">
         <form onSubmit={handleSubmit} className="w-full grid grid-cols-4 gap-4">
@@ -174,7 +208,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
               id="image"
               type="file"
               ref={fileInputRef}
-              onChange={handleFileChange} // Use handleFileChange
+              onChange={handleFileChange}
             />
           </div>
           <div className="w-full flex flex-col gap-1">
@@ -207,20 +241,23 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             <label htmlFor="date" className="ml-2">
               Date
             </label>
-            <DatePickerDemo onChange={handleDateChange} selectedDate={selectedDate} />
+            <DatePickerDemo
+              onChange={handleDateChange}
+              selectedDate={selectedDate}
+            />
           </div>
 
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="startTime" className="ml-2">
               Start time
             </label>
-            <TimePicker onChange={handleStartTimeChange} />
+            <TimePicker onChange={handleStartTimeChange} value={formData.startTime} />
           </div>
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="endTime" className="ml-2">
               End time
             </label>
-            <TimePicker onChange={handleEndTimeChange} />
+            <TimePicker onChange={handleEndTimeChange} value={formData.endTime} />
           </div>
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="description" className="ml-2">
@@ -235,7 +272,11 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             />
           </div>
           <div className="w-full flex flex-row gap-1 justify-end items-end">
-            <Button onClick={onCancel} type="button" className="w-32 hover:text-red-500">
+            <Button
+              onClick={onReset}
+              type="button"
+              className="w-32 hover:text-red-500"
+            >
               Cancel
             </Button>
             <Button className="mt-8 w-32 hover:text-green-500" type="submit">
@@ -243,7 +284,6 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             </Button>
           </div>
         </form>
-
       </div>
     </div>
   );

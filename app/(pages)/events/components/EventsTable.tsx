@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { DeleteModal } from "./DeleteModal";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/services/supabaseClient";
+import { useToast } from "@/hooks/use-toast";
 
 // Dummy data for the table
 interface AdminEvent {
@@ -132,6 +133,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     }
   };
 
+  const { toast } = useToast();
+
   useEffect(() => {
     const subscription = supabase
       .channel("admin_events_Channel")
@@ -149,6 +152,12 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
                 item.id === payload.new.id ? { ...item, ...payload.new } : item
               )
             );
+            return toast({
+              title: 'Event Updated',
+              description: 'The event has been updated.',
+              duration: 5000,
+              variant: 'success',
+            })
           } else if (payload.eventType === 'INSERT') {
             // Ensure payload.new is in the shape of AdminEvent
             setData(prevData => [...prevData, payload.new as AdminEvent]);
