@@ -6,14 +6,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import TimePicker from "./Picker/TimePicker";
+import { useToast } from "@/hooks/use-toast";
+
 
 interface AddEventsProps {
   onClose: () => void;
 }
 
 export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
+
+  const { toast } = useToast();
+
+  const onCancel = () => {
+    setFormData({
+      image: null,
+      title: "",
+      location: "",
+      date: "",
+      startTime: "",
+      endTime: "",
+      description: "",
+    })
+    onClose();
+  }
+
+
   const [formData, setFormData] = useState({
-    image: null as File | null, // Change to File type
+    image: null as File | null,
     title: "",
     location: "",
     date: "",
@@ -25,16 +44,14 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData({ ...formData, [id]: value });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, image: e.target.files[0] }); // Set image file
+      setFormData({ ...formData, image: e.target.files[0] });
     }
   };
 
@@ -48,14 +65,41 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
 
   const handleStartTimeChange = (time: string) => {
     setFormData({ ...formData, startTime: time });
+
+    if (new Date(`1970-01-01T${time}`) >= new Date(`1970-01-01T${formData.endTime}`)) {
+      setFormData({ ...formData, endTime: "" });
+      toast({
+        title: "Warning",
+        description: "Start time should be before end time",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleEndTimeChange = (time: string) => {
-    setFormData({ ...formData, endTime: time });
+    if (new Date(`1970-01-01T${formData.startTime}`) < new Date(`1970-01-01T${time}`)) {
+      setFormData({ ...formData, endTime: time });
+    } else {
+      toast({
+        title: "Warning",
+        description: "End time should be after start time",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate fields
+    if (!formData.title || !formData.location || !formData.date || !formData.startTime || !formData.endTime || !formData.description) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Create a new FormData object
     const data = new FormData();
@@ -66,26 +110,31 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     data.append("endTime", formData.endTime);
     data.append("desc", formData.description);
     if (formData.image) {
-      data.append("image", formData.image); // Append the image file
+      data.append("image", formData.image);
     }
 
-    console.log(formData)
-
-    // Make a POST request to your API
     try {
       const response = await fetch("/api/events", {
         method: "POST",
         body: data,
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || "Failed to create event");
+        toast({
+          title: "Error",
+          description: "Failed to create event",
+          variant: "destructive"
+        });
+        return;
       }
 
-      // Optionally handle success here
-      console.log("Event created successfully:", result);
+      toast({
+        title: "Success",
+        description: "Event created successfully!",
+        variant: "default"
+      });
+
+      // Reset form
       setFormData({
         image: null,
         title: "",
@@ -96,33 +145,17 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
         description: "",
       });
       setSelectedDate(undefined);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Clear the file input
-      }
-      onClose(); // Close the modal on successful submission
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      onClose();
     } catch (error) {
-      console.error("Error submitting form:", error);
-      // Optionally handle errors here
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error creating event:", error);
     }
   };
-
-  const onCancel = () => {
-    setFormData({
-      image: null,
-      title: "",
-      location: "",
-      date: "",
-      startTime: "",
-      endTime: "",
-      description: "",
-    });
-    setSelectedDate(undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
-    }
-    onClose();
-  };
-
   return (
     <div className="w-full min-h-[15dvh] bg-stone-200 flex justify-start items-start relative">
       <X
@@ -210,6 +243,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
             </Button>
           </div>
         </form>
+
       </div>
     </div>
   );

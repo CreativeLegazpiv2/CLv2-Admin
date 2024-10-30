@@ -25,7 +25,9 @@ export default function Eventspage() {
           <AddEvents onClose={closeAddEvent} />
         </div>
         <PaginatedTable openAddEvent={openAddEvent} />
+       
       </div>
+      
     </main>
   );
 }

@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/layout/SideBar";
 import { Nav } from "@/components/layout/Nav";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Creatives Admin 2.0",
@@ -28,6 +29,7 @@ export default function PageLayout({
       <div className="w-full p-4">
       {children}
       </div>
+      <Toaster />
     </main>
   </SidebarProvider>
   );

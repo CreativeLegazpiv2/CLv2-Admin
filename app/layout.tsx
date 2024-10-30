@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Creatives Admin 2.0",
@@ -21,10 +21,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`antialiased`}
+        className={`antialiased min-h-screen`}
       >
         {children}
-        <ToastContainer />
+        <Toaster />
       </body>
     </html>
   );
