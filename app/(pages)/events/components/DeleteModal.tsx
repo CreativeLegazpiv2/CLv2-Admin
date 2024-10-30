@@ -3,11 +3,42 @@ import { TriangleAlert, X } from "lucide-react";
 
 interface DeleteModalProps {
   onClose: () => void;
+  deleteItemId: number | null;
+  onDeleteSuccess: () => void; // Ensure this prop is defined
 }
 
-export const DeleteModal: React.FC<DeleteModalProps> = ({ onClose }) => {
-  // pass here the id of the event to be deleted
-  // onClick={handleDelete(id)} on the button delete
+export const DeleteModal: React.FC<DeleteModalProps> = ({
+  onClose,
+  deleteItemId,
+  onDeleteSuccess, // Include onDeleteSuccess here
+}) => {
+  const handleConfirmDelete = async () => {
+    if (deleteItemId === null) return;
+
+    try {
+      const response = await fetch('/api/events/deleteEvent', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: deleteItemId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error("Failed to delete:", result.error);
+        return;
+      }
+      onDeleteSuccess(); // Call onDeleteSuccess after successful deletion
+      console.log("Delete successful:", result.message);
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    } finally {
+      onClose(); // Close the modal after deletion attempt
+    }
+  };
+
   return (
     <motion.div
       initial={{ scale: 0.9, y: 50, opacity: 0 }}
@@ -37,9 +68,12 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({ onClose }) => {
             <h1>Do you really want to delete this event?</h1>
           </div>
         </div>
-        <footer className="w-full h-[10dvh] ">
+        <footer className="w-full h-[10dvh]">
           <div className="flex justify-end items-center gap-2 w-full h-full px-4">
-            <button className="w-24 py-2 rounded-md hover:bg-[#fcf8e3] duration-300 transition-colors hover:text-red-500">
+            <button
+              className="w-24 py-2 rounded-md hover:bg-[#fcf8e3] duration-300 transition-colors hover:text-red-500"
+              onClick={handleConfirmDelete}
+            >
               Delete
             </button>
             <button

@@ -51,7 +51,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<AdminEvent[]>([]);
-
+  const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -93,17 +93,17 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     // Find the current status of the event
     const currentItem = data.find(item => item.id === id);
     if (!currentItem) return;
-  
+
     // Toggle the status locally
     const updatedStatus = !currentItem.status;
-  
+
     // Update the data state optimistically
-    setData(prevData => 
-      prevData.map(item => 
+    setData(prevData =>
+      prevData.map(item =>
         item.id === id ? { ...item, status: updatedStatus } : item
       )
     );
-  
+
     try {
       // Send the PUT request to update the status
       const response = await fetch(`/api/events`, {
@@ -113,20 +113,20 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
         },
         body: JSON.stringify({ id, status: updatedStatus }),
       });
-  
+
       // Check for errors in the response
       if (!response.ok) {
         throw new Error("Failed to update status");
       }
-  
+
       const result = await response.json();
       console.log("Update successful:", result);
     } catch (error) {
       console.error("Error updating status:", error);
-  
+
       // Roll back the state if the update fails
-      setData(prevData => 
-        prevData.map(item => 
+      setData(prevData =>
+        prevData.map(item =>
           item.id === id ? { ...item, status: !updatedStatus } : item
         )
       );
@@ -147,8 +147,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
         },
         (payload) => {
           if (payload.eventType === 'UPDATE') {
-            setData(prevData => 
-              prevData.map(item => 
+            setData(prevData =>
+              prevData.map(item =>
                 item.id === payload.new.id ? { ...item, ...payload.new } : item
               )
             );
@@ -162,45 +162,56 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             // Ensure payload.new is in the shape of AdminEvent
             setData(prevData => [...prevData, payload.new as AdminEvent]);
           }
-          
+
         }
       )
       .subscribe();
-  
+
     return () => {
       supabase.removeChannel(subscription);
     };
   }, []);
-  
-  
+
+
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = (id: number) => {
-    // You can handle any additional delete logic here (e.g., setting the ID to delete)
-    setShowDeleteModal(true); // This will show the modal
+    setDeleteItemId(id); // Set the ID of the item to be deleted
+    setShowDeleteModal(true); // Show the modal
   };
 
 
   const formatDateToPH = (dateString: string) => {
     const date = new Date(dateString);
-  
+
     // Convert to Philippine time (UTC+8)
     const options: Intl.DateTimeFormatOptions = {
-      year: '2-digit', 
-      month: '2-digit', 
-      day: '2-digit', 
-      hour: '2-digit', 
-      minute: '2-digit', 
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
       hour12: false,
       timeZone: 'Asia/Manila'
     };
-  
+
     // Format the date
     return date.toLocaleString('en-US', options).replace(',', '');
   };
 
-
+  const handleDeleteSuccess = () => {
+    setData((prevData) => prevData.filter((item) => item.id !== deleteItemId));
+    setDeleteItemId(null);
+    setShowDeleteModal(false);
+    toast({
+      title: "Event Deleted",
+      description: "The event was successfully deleted.",
+      duration: 5000,
+      variant: "success",
+    });
+  };
+  
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
       <div className="w-full py-2 flex justify-between items-center">
@@ -235,9 +246,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             {TableheaderFields.map((field) => (
               <TableHead
                 key={field + 1}
-                className={`text-white uppercase ${
-                  field === "ID" ? "w-[5%]" : "w-[10%]"
-                } `}
+                className={`text-white uppercase ${field === "ID" ? "w-[5%]" : "w-[10%]"
+                  } `}
               >
                 {field}
               </TableHead>
@@ -247,21 +257,19 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
         <TableBody>
           {currentData.map((item, index) => (
             <TableRow key={`${item.id}-${index}`} className="hover:bg-gray-300">
-              <TableCell>{item.id}</TableCell> 
+              <TableCell>{item.id}</TableCell>
               <TableCell>
                 <p
-                  className={`${
-                    item.title.length > 10 ? "line-clamp-1" : ""
-                  }`}
+                  className={`${item.title.length > 10 ? "line-clamp-1" : ""
+                    }`}
                 >
                   {item.title}
                 </p>
               </TableCell>
               <TableCell>
                 <p
-                  className={`${
-                    item.location.length > 10 ? "line-clamp-1" : ""
-                  }`}
+                  className={`${item.location.length > 10 ? "line-clamp-1" : ""
+                    }`}
                 >
                   {item.location}
                 </p>
@@ -271,9 +279,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               <TableCell>{item.end_time}</TableCell>
               <TableCell>
                 <p
-                  className={`${
-                    item.desc.length > 10 ? "line-clamp-1" : ""
-                  }`}
+                  className={`${item.desc.length > 10 ? "line-clamp-1" : ""
+                    }`}
                 >
                   {item.desc}
                 </p>
@@ -328,7 +335,11 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             onClick={() => setShowDeleteModal(false)}
             className="w-full h-dvh fixed top-0 left-0 z-[1000] bg-black/50"
           >
-            <DeleteModal onClose={() => setShowDeleteModal(false)} />
+            <DeleteModal
+              onClose={() => setShowDeleteModal(false)}
+              deleteItemId={deleteItemId}
+              onDeleteSuccess={handleDeleteSuccess} 
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -373,9 +384,8 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === 1 ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === 1 ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
@@ -392,11 +402,10 @@ const PaginationUi: React.FC<any> = ({
             <PaginationItem key={page}>
               <PaginationLink
                 href="#"
-                className={`w-10 h-10 flex items-center justify-center ${
-                  page === currentPage
+                className={`w-10 h-10 flex items-center justify-center ${page === currentPage
                     ? "font-bold text-green-500"
                     : "text-slate-900"
-                }`}
+                  }`}
                 onClick={() => goToPage(page)} // Jump to the clicked page
               >
                 {page}
@@ -415,9 +424,8 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === totalPages ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === totalPages ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
