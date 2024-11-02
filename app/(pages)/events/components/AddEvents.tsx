@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { DatePickerDemo } from "./Picker/DatePicker";
@@ -7,16 +7,18 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import TimePicker from "./Picker/TimePicker";
 import { useToast } from "@/hooks/use-toast";
+import { EventData } from "../page";
 
 interface AddEventsProps {
   onClose: () => void;
+  editingEvent?: EventData | null;
 }
 
-export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
+export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) => {
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
-    image: null as File | null,
+    image_path: null as File | null,
     title: "",
     location: "",
     date: "",
@@ -26,28 +28,39 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [minEndTime, setMinEndTime] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [resetKey, setResetKey] = useState(0); // Step 1: add resetKey state
+
+  useEffect(() => {
+    if (editingEvent) {
+      setFormData({
+        image_path: null, // We can't set the File object directly
+        title: editingEvent.title || "",
+        location: editingEvent.location || "",
+        date: editingEvent.date || "",
+        startTime: editingEvent.start_time || "",
+        endTime: editingEvent.end_time || "",
+        description: editingEvent.desc || "",
+      });
+      setSelectedDate(editingEvent.date ? new Date(editingEvent.date) : undefined);
+    }
+  }, [editingEvent]);
 
   const onReset = () => {
     setFormData({
-      image: null,
+      image_path: null,
       title: "",
       location: "",
       date: "",
-      startTime: "",  // Reset start time
-      endTime: "",    // Reset end time
+      startTime: "",
+      endTime: "",
       description: "",
     });
     setSelectedDate(undefined);
-    setMinEndTime(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Clear the file input
+      fileInputRef.current.value = "";
     }
     onClose();
   };
-  
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -58,7 +71,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, image: e.target.files[0] });
+      setFormData({ ...formData, image_path: e.target.files[0] });
     }
   };
 
@@ -71,7 +84,6 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
   };
 
   const isValidTimeFormat = (time: string): boolean => {
-    // Regex to match HH:mm format (24-hour format)
     return /^([01]\d|2[0-3]):([0-5]\d)$/.test(time);
   };
 
@@ -87,7 +99,6 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
 
     setFormData({ ...formData, startTime: time });
 
-    // Check if endTime is valid and after startTime
     if (
       formData.endTime &&
       new Date(`1970-01-01T${time}`) >=
@@ -115,7 +126,6 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
     const startTime = new Date(`1970-01-01T${formData.startTime}`);
     const endTime = new Date(`1970-01-01T${time}`);
 
-    // Check if endTime is after startTime
     if (startTime < endTime) {
       setFormData({ ...formData, endTime: time });
     } else {
@@ -129,7 +139,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (
       !formData.title ||
       !formData.location ||
@@ -145,55 +155,55 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
       });
       return;
     }
-
+  
     const data = new FormData();
     data.append("title", formData.title);
     data.append("location", formData.location);
     data.append("date", formData.date);
-    data.append("startTime", formData.startTime);
-    data.append("endTime", formData.endTime);
+    data.append("start_time", formData.startTime); // Changed from startTime to start_time
+    data.append("end_time", formData.endTime); // Changed from endTime to end_time
     data.append("desc", formData.description);
-    if (formData.image) {
-      data.append("image", formData.image);
-      onReset();
+    if (formData.image_path) {
+      data.append("image", formData.image_path);
     }
-
+  
+    const url = editingEvent ? `/api/events/${editingEvent.id}` : "/api/events";
+    const method = editingEvent ? "PUT" : "POST";
+  
     try {
-      const response = await fetch("/api/events", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: method,
         body: data,
       });
-
+  
       if (!response.ok) {
-        toast({
-          title: "Error",
-          description: "Failed to create event",
-          variant: "destructive",
-        });
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${editingEvent ? "update" : "create"} event`);
       }
-
+  
+      const result = await response.json();
+  
       toast({
         title: "Success",
-        description: "Event created successfully!",
+        description: `Event ${editingEvent ? "updated" : "created"} successfully!`,
         variant: "success",
       });
-
-      onReset(); // Reset the form on success
+  
+      onReset();
     } catch (error) {
       toast({
         title: "Error",
-        description: "An error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
         variant: "destructive",
       });
-      console.error("Error creating event:", error);
+      console.error(`Error ${editingEvent ? "updating" : "creating"} event:`, error);
     }
   };
 
   return (
     <div className="w-full min-h-[15dvh] bg-stone-200 flex justify-start items-start relative">
       <X
-        onClick={onClose}
+        onClick={onReset}
         className="absolute top-2 right-2 cursor-pointer hover:text-red-500 duration-300"
         size={25}
       />
@@ -246,7 +256,6 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
               selectedDate={selectedDate}
             />
           </div>
-
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="startTime" className="ml-2">
               Start time
@@ -280,7 +289,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose }) => {
               Cancel
             </Button>
             <Button className="mt-8 w-32 hover:text-green-500" type="submit">
-              Submit
+              {editingEvent ? "Update" : "Submit"}
             </Button>
           </div>
         </form>

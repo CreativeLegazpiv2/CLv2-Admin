@@ -27,6 +27,7 @@ import { DeleteModal } from "./DeleteModal";
 import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/services/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
+import { EventData } from "../page";
 
 // Dummy data for the table
 interface AdminEvent {
@@ -37,17 +38,20 @@ interface AdminEvent {
   start_time: string;
   end_time: string;
   desc: string;
-  image: File;
+  image_path: File;
   created_at: string;
   status: boolean;
 }
 
 
+
 interface EventsTableProps {
   openAddEvent: () => void;
+  openEditEvent: (item: EventData) => void;
 }
 export const PaginatedTable: React.FC<EventsTableProps> = ({
   openAddEvent,
+  openEditEvent,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<AdminEvent[]>([]);
@@ -75,7 +79,9 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = Array.isArray(data) ? data.slice(startIndex, endIndex) : [];
+  const currentData = Array.isArray(data)
+    ? data.slice(startIndex, endIndex)
+    : [];
 
   const nextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -91,15 +97,15 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
 
   const handleSwitchChange = async (id: number) => {
     // Find the current status of the event
-    const currentItem = data.find(item => item.id === id);
+    const currentItem = data.find((item) => item.id === id);
     if (!currentItem) return;
 
     // Toggle the status locally
     const updatedStatus = !currentItem.status;
 
     // Update the data state optimistically
-    setData(prevData =>
-      prevData.map(item =>
+    setData((prevData) =>
+      prevData.map((item) =>
         item.id === id ? { ...item, status: updatedStatus } : item
       )
     );
@@ -125,8 +131,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
       console.error("Error updating status:", error);
 
       // Roll back the state if the update fails
-      setData(prevData =>
-        prevData.map(item =>
+      setData((prevData) =>
+        prevData.map((item) =>
           item.id === id ? { ...item, status: !updatedStatus } : item
         )
       );
@@ -146,23 +152,22 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           table: "admin_events",
         },
         (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setData(prevData =>
-              prevData.map(item =>
+          if (payload.eventType === "UPDATE") {
+            setData((prevData) =>
+              prevData.map((item) =>
                 item.id === payload.new.id ? { ...item, ...payload.new } : item
               )
             );
             return toast({
-              title: 'Event Updated',
-              description: 'The event has been updated.',
+              title: "Event Updated",
+              description: "The event has been updated.",
               duration: 5000,
-              variant: 'success',
-            })
-          } else if (payload.eventType === 'INSERT') {
+              variant: "success",
+            });
+          } else if (payload.eventType === "INSERT") {
             // Ensure payload.new is in the shape of AdminEvent
-            setData(prevData => [...prevData, payload.new as AdminEvent]);
+            setData((prevData) => [...prevData, payload.new as AdminEvent]);
           }
-
         }
       )
       .subscribe();
@@ -172,8 +177,6 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     };
   }, []);
 
-
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = (id: number) => {
@@ -181,23 +184,22 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     setShowDeleteModal(true); // Show the modal
   };
 
-
   const formatDateToPH = (dateString: string) => {
     const date = new Date(dateString);
 
     // Convert to Philippine time (UTC+8)
     const options: Intl.DateTimeFormatOptions = {
-      year: '2-digit',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
+      year: "2-digit",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
-      timeZone: 'Asia/Manila'
+      timeZone: "Asia/Manila",
     };
 
     // Format the date
-    return date.toLocaleString('en-US', options).replace(',', '');
+    return date.toLocaleString("en-US", options).replace(",", "");
   };
 
   const handleDeleteSuccess = () => {
@@ -211,7 +213,11 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
       variant: "success",
     });
   };
-  
+
+  const handleEdit = (item: EventData) => {
+    openEditEvent(item);
+  }
+
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
       <div className="w-full py-2 flex justify-between items-center">
@@ -246,8 +252,9 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             {TableheaderFields.map((field) => (
               <TableHead
                 key={field + 1}
-                className={`text-white uppercase ${field === "ID" ? "w-[5%]" : "w-[10%]"
-                  } `}
+                className={`text-white uppercase ${
+                  field === "ID" ? "w-[5%]" : "w-[10%]"
+                } `}
               >
                 {field}
               </TableHead>
@@ -260,16 +267,16 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               <TableCell>{item.id}</TableCell>
               <TableCell>
                 <p
-                  className={`${item.title.length > 10 ? "line-clamp-1" : ""
-                    }`}
+                  className={`${item.title.length > 10 ? "line-clamp-1" : ""}`}
                 >
                   {item.title}
                 </p>
               </TableCell>
               <TableCell>
                 <p
-                  className={`${item.location.length > 10 ? "line-clamp-1" : ""
-                    }`}
+                  className={`${
+                    item.location.length > 10 ? "line-clamp-1" : ""
+                  }`}
                 >
                   {item.location}
                 </p>
@@ -278,10 +285,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               <TableCell>{item.start_time}</TableCell>
               <TableCell>{item.end_time}</TableCell>
               <TableCell>
-                <p
-                  className={`${item.desc.length > 10 ? "line-clamp-1" : ""
-                    }`}
-                >
+                <p className={`${item.desc.length > 10 ? "line-clamp-1" : ""}`}>
                   {item.desc}
                 </p>
               </TableCell>
@@ -295,7 +299,10 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               </TableCell>
               <TableCell className="flex justify-end">
                 <div className="flex gap-2">
-                  <Button className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2">
+                  <Button
+                    onClick={() => handleEdit(item)}
+                    className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2"
+                  >
                     Edit
                   </Button>
                   <Button
@@ -338,7 +345,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             <DeleteModal
               onClose={() => setShowDeleteModal(false)}
               deleteItemId={deleteItemId}
-              onDeleteSuccess={handleDeleteSuccess} 
+              onDeleteSuccess={handleDeleteSuccess}
             />
           </motion.div>
         )}
@@ -384,8 +391,9 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === 1 ? "disabled" : ""
-                }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
+                currentPage === 1 ? "disabled" : ""
+              }`}
               href="#"
             />
           </PaginationItem>
@@ -402,10 +410,11 @@ const PaginationUi: React.FC<any> = ({
             <PaginationItem key={page}>
               <PaginationLink
                 href="#"
-                className={`w-10 h-10 flex items-center justify-center ${page === currentPage
+                className={`w-10 h-10 flex items-center justify-center ${
+                  page === currentPage
                     ? "font-bold text-green-500"
                     : "text-slate-900"
-                  }`}
+                }`}
                 onClick={() => goToPage(page)} // Jump to the clicked page
               >
                 {page}
@@ -424,8 +433,9 @@ const PaginationUi: React.FC<any> = ({
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === totalPages ? "disabled" : ""
-                }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
+                currentPage === totalPages ? "disabled" : ""
+              }`}
               href="#"
             />
           </PaginationItem>
@@ -439,7 +449,7 @@ const TableheaderFields = [
   "ID",
   "Event Name",
   "Location",
-  "Date",
+  "event Date",
   "start time",
   "end time",
   "Description",
