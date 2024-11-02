@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { logoutUser } from "@/services/login/logout";
 import { Dialog } from "@radix-ui/react-dialog";
@@ -32,6 +33,7 @@ import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 
 export function AppSidebar() {
+  const { toast } = useToast();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
  const router = useRouter();
@@ -39,10 +41,12 @@ export function AppSidebar() {
     logoutUser();
     setIsLoggedIn(false);
     router.push('/');
-    toast.success("Logged out successfully!", {
-      position: "bottom-right",
-      autoClose: 5000,
-    });
+    toast({
+      variant: "success",
+      title: "Logout Successful",
+      description: "You have successfully logged out.",
+      duration: 5000
+  })
   };
 
   return (

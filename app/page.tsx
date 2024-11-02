@@ -1,4 +1,5 @@
-import { Login } from "@/components/auth/login";
+
+import { Login } from "@/components/auth/Login";
 import { Nav } from "@/components/layout/Nav";
 import { SidebarHeader } from "@/components/ui/sidebar";
 

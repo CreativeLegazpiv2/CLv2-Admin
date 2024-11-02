@@ -14,9 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { loginUser } from "@/services/login/login";
-import { toast } from "react-toastify";
+import { useToast } from "@/hooks/use-toast";
 
 export function Login() {
+  const { toast } = useToast();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null); // Type for error state
@@ -34,14 +36,22 @@ export function Login() {
       localStorage.setItem("token", result.token);
       console.log("Login successful:", result);
       // Redirect to 'creative-users' page upon successful login
+      toast({
+        variant: "success",
+        title: "Welcome back, Admin!",
+        description: "You have successfully logged in.",
+        duration: 5000,
+      })
       router.push("/creative-users");
-      toast.success("Welcome back, Admin!", {
-        position: "bottom-right",
-        autoClose: 5000,
-      });
     } catch (error: any) {
       // Optionally type the error
       console.error("Login failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message,
+        duration: 5000,
+      })
       setError(error.message); // Set the error message to display
     } finally {
       setLoading(false);
