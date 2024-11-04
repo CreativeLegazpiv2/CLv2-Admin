@@ -7,8 +7,8 @@ export async function POST(req: Request) {
     const title = formData.get("title") as string;
     const location = formData.get("location") as string;
     const date = formData.get("date") as string;
-    const start_time = formData.get("startTime") as string;
-    const end_time = formData.get("endTime") as string;
+    const start_time = formData.get("start_time") as string;
+    const end_time = formData.get("end_time") as string;
     const desc = formData.get("desc") as string;
     const image_path = formData.get("image") as File;
 

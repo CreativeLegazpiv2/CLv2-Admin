@@ -18,6 +18,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
+    id: "",
     image_path: null as File | null,
     title: "",
     location: "",
@@ -33,6 +34,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
   useEffect(() => {
     if (editingEvent) {
       setFormData({
+        id: editingEvent.id != null ? String(editingEvent.id) : "",
         image_path: null, // We can't set the File object directly
         title: editingEvent.title || "",
         location: editingEvent.location || "",
@@ -47,6 +49,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
 
   const onReset = () => {
     setFormData({
+      id: "",
       image_path: null,
       title: "",
       location: "",
@@ -88,6 +91,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
   };
 
   const handleStartTimeChange = (time: string) => {
+    console.log("Start Time:", time); // Debugging log
     if (!isValidTimeFormat(time)) {
       toast({
         title: "Error",
@@ -96,15 +100,18 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
       return;
     }
-
-    setFormData({ ...formData, startTime: time });
-
+    setFormData(prevData => {
+      const updatedData = { ...prevData, startTime: time };
+      console.log("Updated FormData:", updatedData); // Debugging log
+      return updatedData;
+    });
+  
     if (
       formData.endTime &&
       new Date(`1970-01-01T${time}`) >=
         new Date(`1970-01-01T${formData.endTime}`)
     ) {
-      setFormData({ ...formData, endTime: "" });
+      setFormData(prevData => ({ ...prevData, endTime: "" }));
       toast({
         title: "Warning",
         description: "Start time should be before end time.",
@@ -112,8 +119,9 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
     }
   };
-
+  
   const handleEndTimeChange = (time: string) => {
+    console.log("End Time:", time); // Debugging log
     if (!isValidTimeFormat(time)) {
       toast({
         title: "Error",
@@ -122,12 +130,12 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
       return;
     }
-
+  
     const startTime = new Date(`1970-01-01T${formData.startTime}`);
     const endTime = new Date(`1970-01-01T${time}`);
-
+  
     if (startTime < endTime) {
-      setFormData({ ...formData, endTime: time });
+      setFormData(prevData => ({ ...prevData, endTime: time }));
     } else {
       toast({
         title: "Warning",
@@ -136,10 +144,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
     }
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+    console.log("Form Data Before Submit:", formData); 
     if (
       !formData.title ||
       !formData.location ||
@@ -157,6 +165,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
     }
   
     const data = new FormData();
+    data.append("id", formData.id);
     data.append("title", formData.title);
     data.append("location", formData.location);
     data.append("date", formData.date);
@@ -167,7 +176,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       data.append("image", formData.image_path);
     }
   
-    const url = editingEvent ? `/api/events/${editingEvent.id}` : "/api/events";
+    const url = editingEvent ? `/api/events/updateEvent` : "/api/events";
     const method = editingEvent ? "PUT" : "POST";
   
     try {
