@@ -221,7 +221,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
       <div className="w-full py-2 flex justify-between items-center">
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full flex items-center justify-between px-0.5">
           <div className="flex w-full max-w-lg items-center gap-2 relative ">
             <Search className="absolute left-4" />
             <Input
