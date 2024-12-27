@@ -15,6 +15,7 @@ export interface EventData {
   image_path: File;
   created_at: string;
   status: boolean;
+  links: string;
 }
 
 export default function Eventspage() {

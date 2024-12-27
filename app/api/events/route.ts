@@ -11,9 +11,10 @@ export async function POST(req: Request) {
     const end_time = formData.get("end_time") as string;
     const desc = formData.get("desc") as string;
     const image_path = formData.get("image") as File;
+    const links = formData.get("links") as string;
 
     // Validate required fields
-    if (!title || !location || !date || !start_time || !end_time || !desc || !image_path) {
+    if (!title || !location || !date || !start_time || !end_time || !desc || !image_path || !links) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     // Insert event details, including image URL, into the "admin_events" table
     const { data, error } = await supabase
       .from('admin_events')
-      .insert([{ title, location, date, start_time, end_time, desc, image_path: imageUrl }]); // Use imageUrl instead of image_path
+      .insert([{ title, location, date, start_time, end_time, desc, image_path: imageUrl, links }]); // Use imageUrl instead of image_path
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

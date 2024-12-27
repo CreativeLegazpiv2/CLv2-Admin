@@ -37,6 +37,7 @@ interface User {
   portfolio: string;
   status: boolean; // This will be added later
   rank: number | null;
+  creative_field: string;
 }
 
 export default function PaginatedTable() {
@@ -208,28 +209,7 @@ export default function PaginatedTable() {
                   className="data-[state=checked]:bg-green-500"
                 />
               </TableCell>
-              <TableCell onClick={() => handleRankClick(item)}>
-                {editingRank === item.detailsid ? (
-                  <Input
-                    type="text"
-                    value={rankValue ?? ""}
-                    onChange={handleRankChange}
-                    onBlur={() => handleRankBlur(item)}
-                    max={10}
-                    min={0}
-                    className="w-16"
-                    step="1"
-                  />
-                ) : (
-                  item.rank && item.rank > 0 ? (
-                    item.rank
-                  ) : (
-                    <button className="bg-[skyblue] border border-[grey] p-1 hover:bg-[#6fafc8]">
-                      Add rank
-                    </button>
-                  )
-                )}
-              </TableCell>
+              <TableCell className="capitalize">{item.creative_field || "Buyer"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -351,5 +331,5 @@ const TableheaderFields = [
   "Birthday",
   "Portfolio Link",
   "Status",
-  "Rank"
+  "Role",
 ];

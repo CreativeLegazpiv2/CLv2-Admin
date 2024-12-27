@@ -14,7 +14,10 @@ interface AddEventsProps {
   editingEvent?: EventData | null;
 }
 
-export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) => {
+export const AddEvents: React.FC<AddEventsProps> = ({
+  onClose,
+  editingEvent,
+}) => {
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -26,6 +29,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
     startTime: "",
     endTime: "",
     description: "",
+    links: "",
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -42,8 +46,11 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
         startTime: editingEvent.start_time || "",
         endTime: editingEvent.end_time || "",
         description: editingEvent.desc || "",
+        links: editingEvent.links || "",
       });
-      setSelectedDate(editingEvent.date ? new Date(editingEvent.date) : undefined);
+      setSelectedDate(
+        editingEvent.date ? new Date(editingEvent.date) : undefined
+      );
     }
   }, [editingEvent]);
 
@@ -57,6 +64,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       startTime: "",
       endTime: "",
       description: "",
+      links: "",
     });
     setSelectedDate(undefined);
     if (fileInputRef.current) {
@@ -100,18 +108,18 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
       return;
     }
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const updatedData = { ...prevData, startTime: time };
       console.log("Updated FormData:", updatedData); // Debugging log
       return updatedData;
     });
-  
+
     if (
       formData.endTime &&
       new Date(`1970-01-01T${time}`) >=
         new Date(`1970-01-01T${formData.endTime}`)
     ) {
-      setFormData(prevData => ({ ...prevData, endTime: "" }));
+      setFormData((prevData) => ({ ...prevData, endTime: "" }));
       toast({
         title: "Warning",
         description: "Start time should be before end time.",
@@ -119,7 +127,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
     }
   };
-  
+
   const handleEndTimeChange = (time: string) => {
     console.log("End Time:", time); // Debugging log
     if (!isValidTimeFormat(time)) {
@@ -130,12 +138,12 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
       return;
     }
-  
+
     const startTime = new Date(`1970-01-01T${formData.startTime}`);
     const endTime = new Date(`1970-01-01T${time}`);
-  
+
     if (startTime < endTime) {
-      setFormData(prevData => ({ ...prevData, endTime: time }));
+      setFormData((prevData) => ({ ...prevData, endTime: time }));
     } else {
       toast({
         title: "Warning",
@@ -144,17 +152,18 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
       });
     }
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form Data Before Submit:", formData); 
+    console.log("Form Data Before Submit:", formData);
     if (
       !formData.title ||
       !formData.location ||
       !formData.date ||
       !formData.startTime ||
       !formData.endTime ||
-      !formData.description
+      !formData.description ||
+      !formData.links
     ) {
       toast({
         title: "Error",
@@ -169,9 +178,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
     data.append("title", formData.title);
     data.append("location", formData.location);
     data.append("date", formData.date);
-    data.append("start_time", formData.startTime); // Changed from startTime to start_time
-    data.append("end_time", formData.endTime); // Changed from endTime to end_time
+    data.append("start_time", formData.startTime);
+    data.append("end_time", formData.endTime);
     data.append("desc", formData.description);
+    data.append("links", formData.links);
     if (formData.image_path) {
       data.append("image", formData.image_path);
     }
@@ -187,7 +197,9 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
   
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to ${editingEvent ? "update" : "create"} event`);
+        throw new Error(
+          errorData.error || `Failed to ${editingEvent ? "update" : "create"} event`
+        );
       }
   
       const result = await response.json();
@@ -202,7 +214,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An error occurred. Please try again.",
         variant: "destructive",
       });
       console.error(`Error ${editingEvent ? "updating" : "creating"} event:`, error);
@@ -217,7 +232,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
         size={25}
       />
       <div className="w-full h-full p-4">
-        <form onSubmit={handleSubmit} className="w-full grid grid-cols-4 gap-4">
+        <form onSubmit={handleSubmit} className="w-full grid grid-cols-5 gap-4">
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="image" className="ml-2">
               Image
@@ -257,6 +272,19 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
             />
           </div>
           <div className="w-full flex flex-col gap-1">
+            <label htmlFor="image" className="ml-2">
+              Link to Event
+            </label>
+            <Input
+              className="bg-white"
+              id="links"
+              type="text"
+              placeholder="Event Links"
+              onChange={handleChange}
+              value={formData.links}
+            />
+          </div>
+          <div className="w-full flex flex-col gap-1 pr-2">
             <label htmlFor="date" className="ml-2">
               Date
             </label>
@@ -265,19 +293,26 @@ export const AddEvents: React.FC<AddEventsProps> = ({ onClose, editingEvent }) =
               selectedDate={selectedDate}
             />
           </div>
+
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="startTime" className="ml-2">
               Start time
             </label>
-            <TimePicker onChange={handleStartTimeChange} value={formData.startTime} />
+            <TimePicker
+              onChange={handleStartTimeChange}
+              value={formData.startTime}
+            />
           </div>
           <div className="w-full flex flex-col gap-1">
             <label htmlFor="endTime" className="ml-2">
               End time
             </label>
-            <TimePicker onChange={handleEndTimeChange} value={formData.endTime} />
+            <TimePicker
+              onChange={handleEndTimeChange}
+              value={formData.endTime}
+            />
           </div>
-          <div className="w-full flex flex-col gap-1">
+          <div className="w-full flex flex-col gap-1 col-span-2">
             <label htmlFor="description" className="ml-2">
               Description
             </label>
