@@ -30,6 +30,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({
     endTime: "",
     description: "",
     links: "",
+    contact: "",
+    announcement: "",
+    objective: "",
+    website: "",
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -47,6 +51,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({
         endTime: editingEvent.end_time || "",
         description: editingEvent.desc || "",
         links: editingEvent.links || "",
+        contact: editingEvent.contact || "",
+        announcement: editingEvent.announcement || "",
+        objective: editingEvent.objective || "",
+        website: editingEvent.website || ""
       });
       setSelectedDate(
         editingEvent.date ? new Date(editingEvent.date) : undefined
@@ -65,6 +73,10 @@ export const AddEvents: React.FC<AddEventsProps> = ({
       endTime: "",
       description: "",
       links: "",
+      contact: "",
+      announcement: "",
+      objective: "",
+      website: "",
     });
     setSelectedDate(undefined);
     if (fileInputRef.current) {
@@ -117,7 +129,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
     if (
       formData.endTime &&
       new Date(`1970-01-01T${time}`) >=
-        new Date(`1970-01-01T${formData.endTime}`)
+      new Date(`1970-01-01T${formData.endTime}`)
     ) {
       setFormData((prevData) => ({ ...prevData, endTime: "" }));
       toast({
@@ -162,8 +174,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
       !formData.date ||
       !formData.startTime ||
       !formData.endTime ||
-      !formData.description ||
-      !formData.links
+      !formData.description
     ) {
       toast({
         title: "Error",
@@ -172,7 +183,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
       });
       return;
     }
-  
+
     const data = new FormData();
     data.append("id", formData.id);
     data.append("title", formData.title);
@@ -181,35 +192,39 @@ export const AddEvents: React.FC<AddEventsProps> = ({
     data.append("start_time", formData.startTime);
     data.append("end_time", formData.endTime);
     data.append("desc", formData.description);
-    data.append("links", formData.links);
+    data.append("links", formData.links || "");
+    data.append("contact", formData.contact);
+    data.append("announcement", formData.announcement);
+    data.append("objective", formData.objective);
+    data.append("website", formData.website);
     if (formData.image_path) {
       data.append("image", formData.image_path);
     }
-  
+
     const url = editingEvent ? `/api/events/updateEvent` : "/api/events";
     const method = editingEvent ? "PUT" : "POST";
-  
+
     try {
       const response = await fetch(url, {
         method: method,
         body: data,
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
           errorData.error || `Failed to ${editingEvent ? "update" : "create"} event`
         );
       }
-  
+
       const result = await response.json();
-  
+
       toast({
         title: "Success",
         description: `Event ${editingEvent ? "updated" : "created"} successfully!`,
         variant: "success",
       });
-  
+
       onReset();
     } catch (error) {
       toast({
@@ -324,6 +339,62 @@ export const AddEvents: React.FC<AddEventsProps> = ({
               value={formData.description}
             />
           </div>
+
+          <div className="w-full flex flex-col gap-1 col-span-2">
+            <label htmlFor="contact" className="ml-2">
+              Contact
+            </label>
+            <Input
+              className="bg-white"
+              id="contact"
+              type="text"
+              placeholder="Contact Info"
+              onChange={handleChange}
+              value={formData.contact}
+            />
+          </div>
+
+          <div className="w-full flex flex-col gap-1 col-span-2">
+            <label htmlFor="announcement" className="ml-2">
+            Announcement
+            </label>
+            <Textarea
+              className="bg-white"
+              id="announcement"
+              placeholder="Announcements"
+              onChange={handleChange}
+              value={formData.announcement}
+            />
+          </div>
+
+
+          <div className="w-full flex flex-col gap-1 col-span-2">
+            <label htmlFor="objective" className="ml-2">
+            Objective
+            </label>
+            <Textarea
+              className="bg-white"
+              id="objective"
+              placeholder="Objective"
+              onChange={handleChange}
+              value={formData.objective}
+            />
+          </div>
+
+          
+          <div className="w-full flex flex-col gap-1 col-span-2">
+            <label htmlFor="website" className="ml-2">
+            Website
+            </label>
+            <Textarea
+              className="bg-white"
+              id="website"
+              placeholder="Website"
+              onChange={handleChange}
+              value={formData.website}
+            />
+          </div>
+
           <div className="w-full flex flex-row gap-1 justify-end items-end">
             <Button
               onClick={onReset}

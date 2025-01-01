@@ -14,21 +14,43 @@ export async function PUT(req: Request) {
     const start_time = formData.get('start_time') as string;
     const end_time = formData.get('end_time') as string;
     const desc = formData.get('desc') as string;
-    const image_path = formData.get("image") as File;
+    const contact = formData.get('contact') as string;
+    const announcement = formData.get('announcement') as string;
+    const objective = formData.get('objective') as string;
+    const website = formData.get('website') as string;
+    const image_path = formData.get('image') as File;
 
     // Validate required fields
-    if (!id || !title || !location || !date || !start_time || !end_time || !desc) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    if (
+      !id ||
+      !title ||
+      !location ||
+      !date ||
+      !start_time ||
+      !end_time ||
+      !desc ||
+      !contact ||
+      !announcement ||
+      !objective ||
+      !website
+    ) {
+      return NextResponse.json(
+        { error: 'Missing required fields.' },
+        { status: 400 }
+      );
     }
 
     let imageUrl = null;
 
     // Fetch the existing image URL before uploading the new image
     let existingImagePath = null;
-    if (image_path) { 
+    if (image_path) {
       // Validate the MIME type
       if (image_path.type !== 'image/jpeg') {
-        return NextResponse.json({ error: 'Invalid image type. Only JPEG images are allowed.' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Invalid image type. Only JPEG images are allowed.' },
+          { status: 400 }
+        );
       }
 
       // Retrieve existing image path from the database
@@ -39,27 +61,31 @@ export async function PUT(req: Request) {
         .single();
 
       if (fetchError) {
-        return NextResponse.json({ error: fetchError.message }, { status: 500 });
+        return NextResponse.json(
+          { error: fetchError.message },
+          { status: 500 }
+        );
       }
-      
+
       existingImagePath = currentData?.image_path || null; // Save the current image path
 
       const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       const filename = `${currentDate}_${Date.now()}_${image_path.name}`;
 
       // Upload image to the "admin_events" bucket
-      const { error: uploadError } = await supabase
-        .storage
+      const { error: uploadError } = await supabase.storage
         .from('admin_events')
         .upload(filename, image_path, { cacheControl: '0', upsert: false });
 
       if (uploadError) {
-        return NextResponse.json({ error: `Image upload failed: ${uploadError.message}` }, { status: 500 });
+        return NextResponse.json(
+          { error: `Image upload failed: ${uploadError.message}` },
+          { status: 500 }
+        );
       }
 
       // Construct the public URL for the new image
-      const { data: publicURLData } = supabase
-        .storage
+      const { data: publicURLData } = supabase.storage
         .from('admin_events')
         .getPublicUrl(filename);
 
@@ -67,13 +93,14 @@ export async function PUT(req: Request) {
 
       // Delete the existing image from Supabase storage if it exists
       if (existingImagePath) {
-        const { error: deleteError } = await supabase
-          .storage
+        const { error: deleteError } = await supabase.storage
           .from('admin_events')
           .remove([existingImagePath.split('/').pop()]); // Use just the filename
 
         if (deleteError) {
-          console.error(`Failed to delete existing image: ${deleteError.message}`);
+          console.error(
+            `Failed to delete existing image: ${deleteError.message}`
+          );
           // You might want to handle this error, but continue with the update
         }
       }
@@ -86,7 +113,10 @@ export async function PUT(req: Request) {
         .single();
 
       if (fetchError) {
-        return NextResponse.json({ error: fetchError.message }, { status: 500 });
+        return NextResponse.json(
+          { error: fetchError.message },
+          { status: 500 }
+        );
       }
       imageUrl = currentData?.image_path || null; // Retain the current image if available
     }
@@ -99,6 +129,10 @@ export async function PUT(req: Request) {
       start_time,
       end_time,
       desc,
+      contact,
+      announcement,
+      objective,
+      website,
       image_path: imageUrl, // Use the new image URL or existing one
     };
 
@@ -114,9 +148,15 @@ export async function PUT(req: Request) {
     }
 
     // Respond with the updated data
-    return NextResponse.json({ message: 'Event updated successfully.', data }, { status: 200 });
+    return NextResponse.json(
+      { message: 'Event updated successfully.', data },
+      { status: 200 }
+    );
   } catch (err) {
     console.error('Error updating event:', err);
-    return NextResponse.json({ error: 'An error occurred while updating the event.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'An error occurred while updating the event.' },
+      { status: 500 }
+    );
   }
 }

@@ -42,6 +42,10 @@ interface AdminEvent {
   created_at: string;
   status: boolean;
   links: string;
+  contact: string;
+  announcement: string;
+  objective:string;
+  website:string;
 }
 
 
