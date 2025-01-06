@@ -3,6 +3,8 @@
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"
+import { Graphs } from "./components/Graph"
+import { GraphUsers } from "./components/GraphUsers"
 
 const chartData = [
   { month: "January", desktop: 186, mobile: 80 },
@@ -32,19 +34,9 @@ const chartConfig = {
 
 export default function Dashboard() {
   return (
-    <ChartContainer config={chartConfig} className="h-full max-h-[80dvh] max-w-[50%] w-full">
-      <BarChart accessibilityLayer data={chartData}>
-        <CartesianGrid vertical={false} />
-        <XAxis
-          dataKey="month"
-          tickLine={false}
-          tickMargin={10}
-          axisLine={false}
-          tickFormatter={(value) => value.slice(0, 3)}
-        />
-        <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-        <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-      </BarChart>
-    </ChartContainer>
+    <main className="flex gap-4 min-h-screen items-center justify-center p-24">
+    <Graphs />
+    <GraphUsers />
+  </main>
   )
 }
