@@ -70,7 +70,7 @@ export function AppSidebar() {
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg p-4 transition-colors hover:bg-muted",
                   pathname === item.url
-                    ? "bg-primary text-stone-300 hover:bg-primary/90"
+                    ? " text-stone-100 hover:bg-primary/90"
                     : "text-stone-300 hover:text-foreground"
                 )}
               >
@@ -99,8 +99,8 @@ export function AppSidebar() {
 
 const items = [
   {
-    title: "Home",
-    url: "#",
+    title: "Dashboard",
+    url: "/dashboard",
     icon: Home,
   },
   {

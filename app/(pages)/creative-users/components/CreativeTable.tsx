@@ -186,7 +186,7 @@ export default function PaginatedTable() {
         <TableHeader className="bg-slate-900 ">
           <TableRow className="hover:bg-slate-900 ">
             {TableheaderFields.map((field) => (
-              <TableHead key={field} className="text-white uppercase">
+              <TableHead key={field} className="text-white uppercase whitespace-nowrap">
                 {field}
               </TableHead>
             ))}
@@ -197,10 +197,10 @@ export default function PaginatedTable() {
             <TableRow key={index} className="hover:bg-gray-300">
               <TableCell>{index + 1}</TableCell>
               <TableCell>{item.first_name}</TableCell>
-              <TableCell>{item.address}</TableCell>
+              <TableCell><p className={`${item.address.length > 15 ? 'line-clamp-1' : ''}`}>{item.address}</p></TableCell>
               <TableCell>{item.mobileNo}</TableCell>
-              <TableCell>{item.email}</TableCell>
-              <TableCell>{item.bday}</TableCell>
+              <TableCell><p className={`${item.email.length > 15 ? 'line-clamp-1' : ''}`}>{item.email}</p></TableCell>
+              <TableCell><p className="whitespace-nowrap">{item.bday}</p></TableCell>
               <TableCell>{item.portfolioLink}</TableCell>
               <TableCell>
                 <Switch
