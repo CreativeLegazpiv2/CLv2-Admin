@@ -48,7 +48,7 @@ export default function Eventspage() {
       <div className="w-full flex flex-col gap-4 h-fit overflow-hidden">
         <div
           className={`transition-all ease-in-out duration-300 ${
-            addEvent ? "" : "-mt-52"
+            addEvent ? "" : "-mt-[20rem]"
           }`}
         >
           <AddEvents onClose={closeAddEvent} editingEvent={editingEvent} />

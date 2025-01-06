@@ -327,20 +327,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
               value={formData.endTime}
             />
           </div>
-          <div className="w-full flex flex-col gap-1 col-span-2">
-            <label htmlFor="description" className="ml-2">
-              Description
-            </label>
-            <Textarea
-              className="bg-white resize-none"
-              id="description"
-              placeholder="Event description"
-              onChange={handleChange}
-              value={formData.description}
-            />
-          </div>
-
-          <div className="w-full flex flex-col gap-1 col-span-2">
+          <div className="w-full flex flex-col gap-1">
             <label htmlFor="contact" className="ml-2">
               Contact
             </label>
@@ -353,8 +340,22 @@ export const AddEvents: React.FC<AddEventsProps> = ({
               value={formData.contact}
             />
           </div>
+          <div className="w-full flex flex-col gap-1 ">
+            <label htmlFor="description" className="ml-2">
+              Description
+            </label>
+            <Textarea
+              className="bg-white resize-none"
+              id="description"
+              placeholder="Event description"
+              onChange={handleChange}
+              value={formData.description}
+            />
+          </div>
 
-          <div className="w-full flex flex-col gap-1 col-span-2">
+          
+
+          <div className="w-full flex flex-col gap-1 ">
             <label htmlFor="announcement" className="ml-2">
             Announcement
             </label>
@@ -368,7 +369,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
           </div>
 
 
-          <div className="w-full flex flex-col gap-1 col-span-2">
+          <div className="w-full flex flex-col gap-1 ">
             <label htmlFor="objective" className="ml-2">
             Objective
             </label>
@@ -382,7 +383,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
           </div>
 
           
-          <div className="w-full flex flex-col gap-1 col-span-2">
+          <div className="w-full flex flex-col gap-1 ">
             <label htmlFor="website" className="ml-2">
             Website
             </label>
@@ -395,7 +396,7 @@ export const AddEvents: React.FC<AddEventsProps> = ({
             />
           </div>
 
-          <div className="w-full flex flex-row gap-1 justify-end items-end">
+          <div className="w-full flex flex-row gap-1 col-span-3 justify-end items-end">
             <Button
               onClick={onReset}
               type="button"
