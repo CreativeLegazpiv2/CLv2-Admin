@@ -54,7 +54,7 @@ export default function Eventspage() {
           <AddEvents onClose={closeAddEvent} editingEvent={editingEvent} />
         </div>
         <PaginatedTable openAddEvent={openAddEvent} openEditEvent={openEditEvent} />
-      </div>
+      </div> 
     </main>
   );
 }

@@ -42,7 +42,7 @@ export function Login() {
         description: "You have successfully logged in.",
         duration: 5000,
       })
-      router.push("/creative-users");
+      router.push("/dashboard");
     } catch (error: any) {
       // Optionally type the error
       console.error("Login failed:", error);
