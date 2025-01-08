@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface RegisteredUser {
@@ -36,51 +37,55 @@ export function RegisteredEventPage({ event }: { event: Event }) {
   }, [event]);
 
   if (!isevent.length) {
-    return <div>Loading...</div>;
+    return <div><Loader className="animate-spin" size={40} /></div>;
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Event Details Section */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4">Event Details</h1>
-        <p><strong>ID:</strong> {event.id}</p>
-        <p><strong>Title:</strong> {event.title}</p>
-        <p><strong>Description:</strong> {event.desc}</p>
-        <p><strong>Location:</strong> {event.location}</p>
-      </div>
-
-      {/* Registered Users Section */}
-      <div className="overflow-y-auto max-h-[60vh] sm:max-h-[70vh] border rounded-lg p-4 bg-gray-50">
-        {isevent.map((user, index) => (
-          <div key={index} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
-            <p><strong>Name:</strong> {user.first_name} {user.last_name}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Phone:</strong> {user.phoneNum}</p>
-            <p><strong>Gender:</strong> {user.gender}</p>
-            <p><strong>Art Experience:</strong> {user.artExp}</p>
-            <p><strong>Subject Experience:</strong> {user.subjectExp}</p>
-            <p>
-              <strong>Portfolio:</strong>{" "}
-              <a href={user.portfolioLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                {user.portfolioLink}
-              </a>
-            </p>
-            <p>
-              <strong>Facebook:</strong>{" "}
-              <a href={user.fb} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                {user.fb}
-              </a>
-            </p>
-            <p>
-              <strong>Instagram:</strong>{" "}
-              <a href={user.ig} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                {user.ig}
-              </a>
-            </p>
+    <div className="h-full overflow-y-auto">
+        <div className="h-full flex flex-col">
+          {/* Event Details Section */}
+          <div className="h-fit flex-none p-4 bg-white rounded-lg shadow-sm">
+            {/* <p><strong>ID:</strong> {event.id}</p> */}
+            <p><strong>Title:</strong> {event.title}</p>
+            <p><strong>Description:</strong> {event.desc}</p>
+            <p><strong>Location:</strong> {event.location}</p>
           </div>
-        ))}
-      </div>
+
+          {/* Registered Users Section */}
+          <div className=" flex-1 mt-4 overflow-auto">
+            <div className="border rounded-lg p-4 bg-gray-50">
+              {isevent.map((user, index) => (
+                <div key={index} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
+                  <p><strong>Name:</strong> {user.first_name} {user.last_name}</p>
+                  <p><strong>Email:</strong> {user.email}</p>
+                  <p><strong>Phone:</strong> {user.phoneNum}</p>
+                  <p><strong>Gender:</strong> {user.gender}</p>
+                  <p><strong>Art Experience:</strong> {user.artExp}</p>
+                  <p><strong>Subject Experience:</strong> {user.subjectExp}</p>
+                  <p>
+                    <strong>Portfolio:</strong>{" "}
+                    <a href={user.portfolioLink} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      {user.portfolioLink}
+                    </a>
+                  </p>
+                  <p>
+                    <strong>Facebook:</strong>{" "}
+                    <a href={user.fb} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      {user.fb}
+                    </a>
+                  </p>
+                  <p>
+                    <strong>Instagram:</strong>{" "}
+                    <a href={user.ig} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                      {user.ig}
+                    </a>
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      
     </div>
   );
 }

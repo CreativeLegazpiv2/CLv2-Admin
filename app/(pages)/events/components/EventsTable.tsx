@@ -371,7 +371,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
         )}
       </AnimatePresence>
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <h2>Registered Users</h2>
+        
         {selectedEvent && (
           <RegisteredEventPage
           event={{
