@@ -28,6 +28,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "@/services/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { EventData } from "../page";
+import Modal from "@/components/modals/event-registered-users";
+import { RegisteredEventPage } from "../registered/[slug]/RegisteredEvent";
 
 // Dummy data for the table
 interface AdminEvent {
@@ -44,16 +46,15 @@ interface AdminEvent {
   links: string;
   contact: string;
   announcement: string;
-  objective:string;
-  website:string;
+  objective: string;
+  website: string;
 }
-
-
 
 interface EventsTableProps {
   openAddEvent: () => void;
   openEditEvent: (item: EventData) => void;
 }
+
 export const PaginatedTable: React.FC<EventsTableProps> = ({
   openAddEvent,
   openEditEvent,
@@ -61,6 +62,14 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState<AdminEvent[]>([]);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<{
+    id: number;
+    title: string;
+    desc: string;
+    location: string;
+  } | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -101,14 +110,11 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
   };
 
   const handleSwitchChange = async (id: number) => {
-    // Find the current status of the event
     const currentItem = data.find((item) => item.id === id);
     if (!currentItem) return;
 
-    // Toggle the status locally
     const updatedStatus = !currentItem.status;
 
-    // Update the data state optimistically
     setData((prevData) =>
       prevData.map((item) =>
         item.id === id ? { ...item, status: updatedStatus } : item
@@ -116,7 +122,6 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     );
 
     try {
-      // Send the PUT request to update the status
       const response = await fetch(`/api/events`, {
         method: "PUT",
         headers: {
@@ -125,7 +130,6 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
         body: JSON.stringify({ id, status: updatedStatus }),
       });
 
-      // Check for errors in the response
       if (!response.ok) {
         throw new Error("Failed to update status");
       }
@@ -135,13 +139,23 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
     } catch (error) {
       console.error("Error updating status:", error);
 
-      // Roll back the state if the update fails
       setData((prevData) =>
         prevData.map((item) =>
           item.id === id ? { ...item, status: !updatedStatus } : item
         )
       );
     }
+  };
+
+  const viewRegisteredUser = (event: AdminEvent) => {
+    // Only pass the required fields to the modal
+    setSelectedEvent({
+      id: event.id,
+      title: event.title,
+      desc: event.desc,
+      location: event.location,
+    });
+    setIsModalOpen(true); // Open the modal
   };
 
   const { toast } = useToast();
@@ -170,7 +184,6 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               variant: "success",
             });
           } else if (payload.eventType === "INSERT") {
-            // Ensure payload.new is in the shape of AdminEvent
             setData((prevData) => [...prevData, payload.new as AdminEvent]);
           }
         }
@@ -185,14 +198,13 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = (id: number) => {
-    setDeleteItemId(id); // Set the ID of the item to be deleted
-    setShowDeleteModal(true); // Show the modal
+    setDeleteItemId(id);
+    setShowDeleteModal(true);
   };
 
   const formatDateToPH = (dateString: string) => {
     const date = new Date(dateString);
 
-    // Convert to Philippine time (UTC+8)
     const options: Intl.DateTimeFormatOptions = {
       year: "2-digit",
       month: "2-digit",
@@ -203,7 +215,6 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
       timeZone: "Asia/Manila",
     };
 
-    // Format the date
     return date.toLocaleString("en-US", options).replace(",", "");
   };
 
@@ -221,7 +232,7 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
 
   const handleEdit = (item: EventData) => {
     openEditEvent(item);
-  }
+  };
 
   return (
     <div className="w-full max-w-[90dvw] mx-auto flex flex-col">
@@ -257,9 +268,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
             {TableheaderFields.map((field) => (
               <TableHead
                 key={field + 1}
-                className={`text-white uppercase ${
-                  field === "ID" ? "w-[5%]" : "w-[10%]"
-                } `}
+                className={`text-white uppercase ${field === "ID" ? "w-[5%]" : "w-[10%]"
+                  } `}
               >
                 {field}
               </TableHead>
@@ -279,9 +289,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               </TableCell>
               <TableCell>
                 <p
-                  className={`${
-                    item.location.length > 10 ? "line-clamp-1" : ""
-                  }`}
+                  className={`${item.location.length > 10 ? "line-clamp-1" : ""
+                    }`}
                 >
                   {item.location}
                 </p>
@@ -304,6 +313,12 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
               </TableCell>
               <TableCell className="flex justify-end">
                 <div className="flex gap-2">
+                  <Button
+                    className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2"
+                    onClick={() => viewRegisteredUser(item)}
+                  >
+                    Users
+                  </Button>
                   <Button
                     onClick={() => handleEdit(item)}
                     className="bg-slate-900 text-stone-50 group w-16 hover:text-green-500 mr-2"
@@ -355,6 +370,19 @@ export const PaginatedTable: React.FC<EventsTableProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <h2>Registered Users</h2>
+        {selectedEvent && (
+          <RegisteredEventPage
+          event={{
+            id: selectedEvent.id,
+            title: selectedEvent.title,
+            desc: selectedEvent.desc,
+            location: selectedEvent.location
+          }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
@@ -364,22 +392,21 @@ const PaginationUi: React.FC<any> = ({
   totalPages,
   prevPage,
   nextPage,
-  goToPage, // Add this new prop to handle jumping to a specific page
+  goToPage,
 }) => {
-  const pageRange = 3; // Number of pages to display at once
+  const pageRange = 3;
 
-  // Calculate pages to show based on currentPage
   const getPagesToShow = () => {
     let start, end;
 
     if (currentPage <= 2) {
       start = 1;
-      end = Math.min(pageRange, totalPages); // Show first 3 pages
+      end = Math.min(pageRange, totalPages);
     } else if (currentPage >= totalPages - 1) {
-      start = Math.max(totalPages - pageRange + 1, 1); // Show last 3 pages
+      start = Math.max(totalPages - pageRange + 1, 1);
       end = totalPages;
     } else {
-      start = currentPage - 1; // Show current page in the middle
+      start = currentPage - 1;
       end = Math.min(start + pageRange - 1, totalPages);
     }
 
@@ -392,55 +419,43 @@ const PaginationUi: React.FC<any> = ({
     <div>
       <Pagination className="w-full max-w-md min-w-[24rem] flex justify-end">
         <PaginationContent className="flex items-center">
-          {/* Previous Button */}
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === 1 ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === 1 ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
-
-          {/* Ellipsis before the page numbers if we're past the first 3 pages */}
           {currentPage > 2 && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
-
-          {/* Display 3 pages dynamically */}
           {pages.map((page) => (
             <PaginationItem key={page}>
               <PaginationLink
                 href="#"
-                className={`w-10 h-10 flex items-center justify-center ${
-                  page === currentPage
+                className={`w-10 h-10 flex items-center justify-center ${page === currentPage
                     ? "font-bold text-green-500"
                     : "text-slate-900"
-                }`}
-                onClick={() => goToPage(page)} // Jump to the clicked page
+                  }`}
+                onClick={() => goToPage(page)}
               >
                 {page}
               </PaginationLink>
             </PaginationItem>
           ))}
-
-          {/* Ellipsis after the page numbers if there are more pages to come */}
           {currentPage < totalPages - 1 && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
-
-          {/* Next Button */}
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === totalPages ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === totalPages ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
@@ -454,9 +469,9 @@ const TableheaderFields = [
   "ID",
   "Event Name",
   "Location",
-  "event Date",
-  "start time",
-  "end time",
+  "Event Date",
+  "Start Time",
+  "End Time",
   "Description",
   "Created At",
   "Status",
