@@ -35,7 +35,6 @@ const chartConfig = {
 export default function Dashboard() {
   return (
     <main className="flex gap-4 min-h-screen items-center justify-center p-24">
-    <Graphs />
     <GraphUsers />
   </main>
   )
