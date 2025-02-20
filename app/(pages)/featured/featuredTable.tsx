@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Send } from "lucide-react";
 import AddEventPanel, { AdminEvent } from "./addFeatures";
 
-interface EventsTableProps {}
+interface EventsTableProps { }
 
 export const PaginatedTable: React.FC<EventsTableProps> = () => {
   const [data, setData] = useState<AdminEvent[]>([]);
@@ -87,22 +87,24 @@ export const PaginatedTable: React.FC<EventsTableProps> = () => {
   // This function calls the DELETE API without using the native confirm
   const deleteConfirmed = async (id: string) => {
     try {
-      const res = await fetch(`/api/featured/delete?id=${id}`, {
+      console.log(`Sending delete request for id: ${id}`)
+
+      const res = await fetch(`/api/featured/delete/${id}`, {
         method: "DELETE",
       });
+
       if (res.ok) {
-        // Remove the deleted record from the UI
-        setData((prevData) =>
-          prevData.filter((item) => String(item.id) !== id)
-        );
-        console.log("Record and associated image deleted successfully");
+        setData((prevData) => prevData.filter((item) => String(item.id) !== id));
+        console.log("✅ Record and associated image deleted successfully");
       } else {
-        console.error("Delete failed");
+        const errorResponse = await res.json();
+        console.error("❌ Delete failed:", errorResponse.error);
       }
     } catch (error) {
-      console.error("Error deleting record:", error);
+      console.error("❌ Error deleting record:", error);
     }
   };
+
 
   // When the Delete button is clicked, set the pending delete and show modal
   const handleDeleteButtonClick = (id: string) => {
@@ -173,9 +175,8 @@ export const PaginatedTable: React.FC<EventsTableProps> = () => {
             {TableheaderFields.map((field) => (
               <TableHead
                 key={field}
-                className={`text-white uppercase ${
-                  field === "ID" ? "w-[5%]" : "w-[10%]"
-                }`}
+                className={`text-white uppercase ${field === "ID" ? "w-[5%]" : "w-[10%]"
+                  }`}
               >
                 {field}
               </TableHead>
@@ -184,17 +185,16 @@ export const PaginatedTable: React.FC<EventsTableProps> = () => {
         </TableHeader>
         <TableBody>
           {currentData.map((item) => (
-            <TableRow key={item.id} className="hover:bg-gray-300">
+            <TableRow key={item.id ?? item.title ?? Math.random()} className="hover:bg-gray-300">
               <TableCell>{item.id}</TableCell>
               <TableCell>
-                <p className={`${item.title.length > 10 ? "line-clamp-1" : ""}`}>
-                  {item.title}
+                <p className={`${item.title?.length && item.title.length > 10 ? "line-clamp-1" : ""}`}>
+                  {item.title ?? "Untitled"}
                 </p>
               </TableCell>
               <TableCell>
                 <img
                   src={item.image_url}
-                  alt={item.title}
                   className="w-20 h-20 object-cover"
                 />
               </TableCell>
@@ -266,9 +266,8 @@ const PaginationUi: React.FC<{
           <PaginationItem>
             <PaginationPrevious
               onClick={prevPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === 1 ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === 1 ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>
@@ -281,11 +280,10 @@ const PaginationUi: React.FC<{
             <PaginationItem key={page}>
               <PaginationLink
                 href="#"
-                className={`w-10 h-10 flex items-center justify-center ${
-                  page === currentPage
+                className={`w-10 h-10 flex items-center justify-center ${page === currentPage
                     ? "font-bold text-green-500"
                     : "text-slate-900"
-                }`}
+                  }`}
                 onClick={() => goToPage(page)}
               >
                 {page}
@@ -300,9 +298,8 @@ const PaginationUi: React.FC<{
           <PaginationItem>
             <PaginationNext
               onClick={nextPage}
-              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${
-                currentPage === totalPages ? "disabled" : ""
-              }`}
+              className={`bg-slate-900 text-slate-50 w-28 border border-slate-400 ${currentPage === totalPages ? "disabled" : ""
+                }`}
               href="#"
             />
           </PaginationItem>

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const title = formData.get('title');
     const image = formData.get('image');
 
-    if (!title || !image) {
+    if (!image) {
       return NextResponse.json(
         { error: 'Missing required fields: title and image' },
         { status: 400 }

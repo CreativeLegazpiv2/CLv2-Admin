@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 // You may want to move this type to a shared file
 export interface AdminEvent {
   id: number;
-  title: string;
+  title?: string | null;
   created_at: string;
   image_url?: string;
 }
@@ -31,34 +31,31 @@ const AddEventPanel: FC<AddEventPanelProps> = ({ isOpen, onClose, onEventAdded }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!title || !image) {
-      setUploadStatus("Please provide both a title and an image.");
+  
+    if (!image) {
+      setUploadStatus("Please provide an image.");
       return;
     }
-
+  
     const formData = new FormData();
-    formData.append("title", title);
+    if (title) formData.append("title", title);
     formData.append("image", image);
-
+  
     try {
       const response = await fetch("/api/featured", {
         method: "POST",
         body: formData,
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         setUploadStatus("Image uploaded and record created successfully!");
-        // Create a new event object – using the API response if available, or fallback to local data
         const newEvent: AdminEvent = {
-          id: result.id || Date.now(), // fallback id using Date.now()
-          title: title,
+          id: result.id,
+          title: title || null, // Allow title to be null
           created_at: new Date().toISOString(),
         };
-        // Notify parent component of the new event
         onEventAdded(newEvent);
-        // Optionally, clear the form here:
         setTitle("");
         setImage(null);
       } else {
@@ -68,6 +65,7 @@ const AddEventPanel: FC<AddEventPanelProps> = ({ isOpen, onClose, onEventAdded }
       setUploadStatus("An unexpected error occurred.");
     }
   };
+  
 
   return (
     <AnimatePresence>
