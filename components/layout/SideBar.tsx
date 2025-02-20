@@ -19,6 +19,7 @@ import { logoutUser } from "@/services/login/logout";
 import { Dialog } from "@radix-ui/react-dialog";
 
 import {
+  PictureInPicture,
   Calendar,
   HelpCircle,
   Home,
@@ -112,6 +113,11 @@ const items = [
     title: "Events",
     url: "/events",
     icon: Calendar,
+  },
+  {
+    title: "Featured",
+    url: "/featured",
+    icon: PictureInPicture,
   },
   // {
   //   title: "Search",
