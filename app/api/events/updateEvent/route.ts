@@ -46,9 +46,9 @@ export async function PUT(req: Request) {
     let existingImagePath = null;
     if (image_path) {
       // Validate the MIME type
-      if (image_path.type !== 'image/jpeg') {
+      if (!image_path.type.startsWith('image/')) {
         return NextResponse.json(
-          { error: 'Invalid image type. Only JPEG images are allowed.' },
+          { error: 'Invalid file type. Please upload an image file.' },
           { status: 400 }
         );
       }
